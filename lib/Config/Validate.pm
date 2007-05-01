@@ -53,7 +53,7 @@ Config::Validate - Validate data structures generated from configuration files.
 
   sub _validate {
     my ($self, $cfg, $schema, $path) = @_;
-    
+
     while (my ($canonical_name, $def) = each %$schema) {
       my @curpath = (@$path, $canonical_name);
       my @names = ($canonical_name);
@@ -90,7 +90,7 @@ Config::Validate - Validate data structures generated from configuration files.
         
         print "Validating ", _mkpath(@curpath), "\n" if $debug[$$self];
         if (lc($def->{type}) eq 'nested') {
-          _validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
+          $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
           my $callback = $types[$$self]{$def->{type}};
           $callback->($self, $cfg->{$canonical_name}, $def, \@curpath);
@@ -101,7 +101,7 @@ Config::Validate - Validate data structures generated from configuration files.
             die sprintf("%s: callback specified is not a code reference", 
                         _mkpath(@curpath));
           }
-          $def->{callback}($cfg->{$canonical_name}, $def, \@curpath);
+          $def->{callback}($self, $cfg->{$canonical_name}, $def, \@curpath);
         }
         $found++;
       }

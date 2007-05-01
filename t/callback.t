@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Config::General;
 use Data::Dumper;
 
@@ -12,9 +12,10 @@ BEGIN { use_ok('Config::Validate', 'validate') };
   my $define = { type => 'boolean' };
   
   my $callback = sub {
-    my ($value, $def, $path) = @_;
+    my ($self, $value, $def, $path) = @_;
     
     ok(1, "callback ran");
+    isa_ok($self, 'Config::Validate');
     is($value, 'yes', "value argument correct");
     is_deeply($def, $define, 'define argument correct');
     is_deeply($path, [ 'booleantest' ], 'path argument correct');

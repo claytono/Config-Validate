@@ -5,8 +5,9 @@ use warnings;
 use Test::More tests => 2;
 use Config::General;
 use Data::Dumper;
+use Carp::Always;
 
-BEGIN { use_ok('Config::Validate', ':all') };
+BEGIN { use_ok('Config::Validate', 'validate') };
 
 my $plugin_schema = {
   blackhole => { type => 'nested',
@@ -74,7 +75,7 @@ my $config = Config::General->new(-ConfigFile => 't/test-config.conf',
 isa_ok($config, 'Config::General');
 
 my %config = $config->getall;
-print STDERR Dumper(\%config);
+#print STDERR Dumper(\%config);
 
 my $new = Config::Validate::validate(\%config, $schema);
-print STDERR Dumper($new);
+#print STDERR Dumper($new);

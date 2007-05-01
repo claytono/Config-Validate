@@ -46,7 +46,7 @@ my $cv = Config::Validate->new;
   my $value = { teststring => 'test' };
   eval { $cv->validate($value) };
   like($@, qr/length of string is 4, but must be greater than 1000/, 
-       "maxlen failed (expected)");
+       "minlen failed (expected)");
 }
 
 { # success w/regex - qr//
