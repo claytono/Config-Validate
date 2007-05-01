@@ -6,7 +6,7 @@ use Test::More tests => 7;
 use Config::General;
 use Data::Dumper;
 
-BEGIN { use_ok('Config::Validate', ':all') };
+BEGIN { use_ok('Config::Validate', 'validate') };
 
 { # Test success
   my $define = { type => 'boolean' };

@@ -6,7 +6,7 @@ use Test::More tests => 32;
 use Config::General;
 use Data::Dumper;
 
-BEGIN { use_ok('Config::Validate', ':all') };
+BEGIN { use_ok('Config::Validate', 'validate') };
 
 my @valid = qw(0 1 t f true false on off y n yes no);
 push(@valid, map { uc($_) } @valid);
