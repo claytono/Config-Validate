@@ -1,0 +1,9 @@
+Changes
+lib/Config/Validate.pm
+Makefile.PL
+MANIFEST
+README
+t/boolean.t
+t/callback.t
+t/Config-Validate.t
+t/string.t
