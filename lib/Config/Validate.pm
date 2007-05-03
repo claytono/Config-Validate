@@ -54,6 +54,7 @@ Config::Validate - Validate data structures generated from configuration files.
   sub _validate {
     my ($self, $cfg, $schema, $path) = @_;
 
+    my $orig = dclone($cfg);
     while (my ($canonical_name, $def) = each %$schema) {
       my @curpath = (@$path, $canonical_name);
       my @names = ($canonical_name);
@@ -78,7 +79,7 @@ Config::Validate - Validate data structures generated from configuration files.
         }
         
         if (not defined $types[$$self]{$def->{type}}) {
-          die "No invalid type '$def->{type}' specified for " . _mkpath(@curpath);
+          die "Invalid type '$def->{type}' specified for " . _mkpath(@curpath);
         }
         
         next unless defined $cfg->{$name};
@@ -86,6 +87,7 @@ Config::Validate - Validate data structures generated from configuration files.
         if ($name ne $canonical_name) {
           $cfg->{$canonical_name} = $cfg->{$name};
           delete $cfg->{$name};
+          delete $orig->{$name};
         }
         
         print "Validating ", _mkpath(@curpath), "\n" if $debug[$$self];
@@ -111,9 +113,17 @@ Config::Validate - Validate data structures generated from configuration files.
         $found++;
       }
       
+      delete $orig->{$canonical_name};
+
       if (not $found and (not defined $def->{optional} or not $def->{optional})) {
         die "Required item " . _mkpath(@curpath) . " was not found";
       }
+    }
+
+    my @unknown = sort keys %$orig;
+    if (@unknown != 0) {
+      die sprintf("%s: the following unknown items were found: %s",
+                  _mkpath($path), join(', ', @unknown));
     }
   }
 
