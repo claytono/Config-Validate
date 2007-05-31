@@ -5,8 +5,9 @@ package Config::Validate;
   use strict;
   use warnings;
   use Data::Dumper;
-  use Storable qw(dclone);
+  use Scalar::Util::Clone qw(clone);
   use UNIVERSAL qw(isa);
+  use Params::Validate qw(validate_with :types);
 
   use Exporter qw(import);
   our @EXPORT_OK = qw(validate);
@@ -24,37 +25,113 @@ Config::Validate - Validate data structures generated from configuration files.
   my @debug  :Field :Accessor(debug) :Arg(debug);
   my @types  :Field;
 
+  my %default_types = (
+    integer   => { validate => \&_validate_integer },
+    string    => { validate => \&_validate_string },
+    boolean   => { validate => \&_validate_boolean },
+    hash      => { validate => \&_validate_hash }, 
+    array     => { validate => \&_validate_array }, 
+    directory => { validate => \&_validate_directory },
+    file      => { validate => \&_validate_file },
+    nested    => { validate => sub { die "'nested' is not valid here"; }},
+  );
+
   sub _init :Init {
     my ($self, $args) = @_;
     
-    $types[$$self] = { 
-      integer => \&_validate_integer,
-      string  => \&_validate_string,
-      boolean => \&_validate_boolean,
-      hash    => \&_validate_hash,
-      nested  => sub { die "'nested' is not valid here" },
-    };
+    $types[$$self] = clone(\%default_types);
+    return;
   }
 
+  sub _parse_add_type_params {
+    my $spec = { name => { type => SCALAR },
+                 validate => { type => CODEREF,
+                               optional => 1,
+                             },
+                 init     => { type => CODEREF,
+                               optional => 1,
+                             },
+                 finish   => { type => CODEREF,
+                               optional => 1,
+                             },
+               };
+    return validate_with(params         => \@_,
+                         spec           => $spec,
+                         stack_skip     => 2,
+                         normalize_keys => sub {
+                           return lc $_[0];
+                         },
+                        );
+  }
+
+  sub add_default_type {
+    # this is a function, but if it's called as a method, that's
+    # fine too.
+    shift if isa($_[0], 'Config::Validate');
+    shift if defined $_ and $@[0] eq 'Config::Validate';
+
+    my %p = _parse_add_type_params(@_);
+    
+    if (defined $default_types{$p{name}}) {
+      die "Attempted to add type '$p{name}' that already exists";
+    }
+    
+    my $type = clone(\%p);
+    delete $type->{name};
+    if (keys %$type == 0) {
+      die "Attempted to define a type with no callbacks";
+    }
+    $default_types{$p{name}} = $type;
+    return;
+  }
+
+  sub add_type {
+    my $self = shift;
+    my %p = _parse_add_type_params(@_);
+    
+    if (defined $types[$$self]{$p{name}}) {
+      die "Attempted to add type '$p{name}' that already exists";
+    }
+    
+    my $type = clone(\%p);
+    delete $type->{name};
+    if (keys %$type == 0) {
+      die "Attempted to define a type with no callbacks";
+    }
+    $types[$$self]{$p{name}} = $type;
+    return;
+  }
+
+  sub _type_callback {
+    my ($self, $callback, @args) = @_;
+
+    while (my ($name, $value) = each %{ $types[$$self] }) {
+      if (defined $value->{$callback}) {
+        $value->{$callback}();
+      }
+    }
+  }
 
   sub validate {
+    my ($self, $cfg);
     if (isa($_[0], 'Config::Validate')) {
-      my ($self, $cfg) = @_;
-      
-      my $new_config = dclone($cfg);
-      $self->_validate($new_config, $schema[$$self], []);
-      return $new_config;
+      ($self, $cfg) = @_;
     } else {
-      my ($cfg, $schema) = @_;
-      my $cv = Config::Validate->new(schema => $schema);
-      return $cv->validate($cfg);
+      my $schema;
+      ($cfg, $schema) = @_;
+      $self = Config::Validate->new(schema => $schema);
     }
+    $cfg = clone($cfg);
+    $self->_type_callback('init', $cfg);
+    $self->_validate($cfg, $self->schema, []);
+    $self->_type_callback('finish', $cfg);
+    return $cfg;
   }
 
   sub _validate {
     my ($self, $cfg, $schema, $path) = @_;
 
-    my $orig = dclone($cfg);
+    my $orig = clone($cfg);
     while (my ($canonical_name, $def) = each %$schema) {
       my @curpath = (@$path, $canonical_name);
       my @names = ($canonical_name);
@@ -94,7 +171,7 @@ Config::Validate - Validate data structures generated from configuration files.
         if (lc($def->{type}) eq 'nested') {
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
-          my $callback = $types[$$self]{$def->{type}};
+          my $callback = $types[$$self]{$def->{type}}{validate};
           $callback->($self, $cfg->{$canonical_name}, $def, \@curpath);
         }
         
@@ -147,11 +224,29 @@ Config::Validate - Validate data structures generated from configuration files.
     while (my ($k, $v) = each %$value) {
       my @curpath = (@$path, $k);
       print "Validating ", _mkpath(@curpath), "\n" if $debug[$$self];
-      my $callback = $types[$$self]{$def->{keytype}};
+      my $callback = $types[$$self]{$def->{keytype}}{validate};
       $callback->($self, $k, $def, \@curpath);
       if ($def->{child}) {
         $self->_validate($v, $def->{child}, \@curpath);
       }
+    }
+  }
+
+  sub _validate_array {
+    my ($self, $value, $def, $path) = @_;
+    
+    if (not defined $def->{subtype}) {
+      die "No subtype specified for " . _mkpath(@$path);
+    }
+    
+    if (not defined $types[$$self]{$def->{subtype}}) {
+      die "Invalid subtype '$def->{subtype}' specified for " . _mkpath(@$path);
+    }
+    
+    foreach my $item (@$value) {
+      print "Validating ", _mkpath($path), "\n" if $debug[$$self];
+      my $callback = $types[$$self]{$def->{subtype}}{validate};
+      $callback->($self, $item, $def, $path);
     }
   }
 
@@ -205,6 +300,22 @@ Config::Validate - Validate data structures generated from configuration files.
     if ($value !~ /^ [01] $/x) {
       die sprintf("%s: invalid value '%s', must be: %s", _mkpath($path),
                   $value, join(', ', (0, 1, @true, @false)));
+    }
+  }
+  
+  sub _validate_directory {
+    my ($self, $value, $def, $path) = @_;
+
+    if (not -d $value) {
+      die sprintf("%s: '%s' is not a directory", _mkpath($path), $value)
+    }
+  }
+  
+  sub _validate_file {
+    my ($self, $value, $def, $path) = @_;
+
+    if (not -f $value and not -l $value) {
+      die sprintf("%s: '%s' is not a file", _mkpath($path), $value)
     }
   }
   
