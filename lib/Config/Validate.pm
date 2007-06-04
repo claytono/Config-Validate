@@ -33,6 +33,8 @@ Config::Validate - Validate data structures generated from configuration files.
     array     => { validate => \&_validate_array }, 
     directory => { validate => \&_validate_directory },
     file      => { validate => \&_validate_file },
+    domain    => { validate => \&_validate_domain },
+    hostname  => { validate => \&_validate_hostname },
     nested    => { validate => sub { die "'nested' is not valid here"; }},
   );
 
@@ -131,7 +133,9 @@ Config::Validate - Validate data structures generated from configuration files.
   sub _validate {
     my ($self, $cfg, $schema, $path) = @_;
 
+    $schema = clone($schema);
     my $orig = clone($cfg);
+
     while (my ($canonical_name, $def) = each %$schema) {
       my @curpath = (@$path, $canonical_name);
       my @names = ($canonical_name);
@@ -317,6 +321,34 @@ Config::Validate - Validate data structures generated from configuration files.
     if (not -f $value and not -l $value) {
       die sprintf("%s: '%s' is not a file", _mkpath($path), $value)
     }
+  }
+
+  sub _validate_domain {
+    my ($self, $value, $def, $path) = @_;
+
+    use Data::Validate::Domain qw(is_domain);
+    
+    my $rc = is_domain($value, { domain_allow_single_label => 1,
+                                 domain_private_tld => 1
+                                }
+                      );
+    return if $rc;
+
+    die sprintf("%s: '%s' is not a valid domain name.", _mkpath($path), $value);
+  }
+  
+  sub _validate_hostname {
+    my ($self, $value, $def, $path) = @_;
+
+    use Data::Validate::Domain qw(is_hostname);
+    
+    my $rc = is_hostname($value, { domain_allow_single_label => 1,
+                                 domain_private_tld => 1
+                                }
+                      );
+    return if $rc;
+
+    die sprintf("%s: '%s' is not a valid hostname.", _mkpath($path), $value);
   }
   
 }
