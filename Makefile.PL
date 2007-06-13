@@ -12,6 +12,10 @@ WriteMakefile(
     NAME              => 'Config::Validate',
     VERSION_FROM      => 'lib/Config/Validate.pm', # finds $VERSION
     PREREQ_PM         => {}, # e.g., Module::Name => 1.1
+    dist => {
+      COMPRESS => 'bzip2 --best -f',
+      SUFFIX => '.bz2'
+     },
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Config/Validate.pm', # retrieve abstract from module
        AUTHOR         => "Clayton O'Neill <coneill\@eng.rr.com>") : ()),
@@ -34,13 +38,10 @@ sub MY::postamble {
   my $fragment = qq{
 
 rpm: \$(DISTVNAME).tar\$(SUFFIX)
-\trm -rf $cwd/BUILD
-\tmkdir $cwd/BUILD
-\trpmbuild -ba $defines \$(DISTNAME)-pm.spec
-\trm -rf $cwd/BUILD
+\tmakerpm rpm \$(DISTNAME)-pm.spec \$(VERSION)
 
 srpm: \$(DISTVNAME).tar\$(SUFFIX)
-\trpmbuild -bs $defines \$(DISTNAME)-pm.spec
+\tmakerpm srpm \$(DISTNAME)-pm.spec \$(VERSION)
 
   };
   if ($do_coverage) {
