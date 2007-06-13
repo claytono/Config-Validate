@@ -6,7 +6,7 @@ eval {
  require ExtUtils::MakeMaker::Coverage;
 };
 
-my $do_coverage = ($@ == '');
+my $do_coverage = ($@ eq '');
 
 WriteMakefile(
     NAME              => 'Config::Validate',
