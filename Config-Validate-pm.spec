@@ -20,6 +20,11 @@ BuildRequires: perl(Test::More) >= 0.18
 Requires: perl(Test::More) >= 0.18
 %endif
 
+BuildRequires: perl(Data::Validate::Domain)
+BuildRequires: perl(Object::InsideOut)
+BuildRequires: perl(Params::Validate)
+BuildRequires: perl(Scalar::Util::Clone)
+
 %description
 none
 
