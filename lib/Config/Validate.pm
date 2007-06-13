@@ -22,15 +22,21 @@ Config::Validate - Validate data structures generated from configuration files.
 =cut
   
   my @schema :Field :Accessor(schema) :Arg(schema);
+  my @array_allows_scalar :Field 
+                          :Accessor(array_allows_scalar) 
+                          :Arg(Name => 'array_allows_scalar', Default => 1);
   my @debug  :Field :Accessor(debug) :Arg(debug);
   my @types  :Field;
 
   my %default_types = (
     integer   => { validate => \&_validate_integer },
+    float     => { validate => \&_validate_float },
     string    => { validate => \&_validate_string },
     boolean   => { validate => \&_validate_boolean },
     hash      => { validate => \&_validate_hash }, 
-    array     => { validate => \&_validate_array }, 
+    array     => { validate => \&_validate_array,
+                   byreference => 1,
+                 }, 
     directory => { validate => \&_validate_directory },
     file      => { validate => \&_validate_file },
     domain    => { validate => \&_validate_domain },
@@ -163,7 +169,7 @@ Config::Validate - Validate data structures generated from configuration files.
           die "Invalid type '$def->{type}' specified for " . _mkpath(@curpath);
         }
         
-        next unless defined $cfg->{$name};
+         next unless defined $cfg->{$name};
         
         if ($name ne $canonical_name) {
           $cfg->{$canonical_name} = $cfg->{$name};
@@ -175,8 +181,14 @@ Config::Validate - Validate data structures generated from configuration files.
         if (lc($def->{type}) eq 'nested') {
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
-          my $callback = $types[$$self]{$def->{type}}{validate};
-          $callback->($self, $cfg->{$canonical_name}, $def, \@curpath);
+          my $typeinfo = $types[$$self]{$def->{type}};
+          my $callback = $typeinfo->{validate};
+          
+          if (defined $typeinfo->{byreference} and $typeinfo->{byreference}) {
+            $callback->($self, \$cfg->{$canonical_name}, $def, \@curpath);
+          } else {
+            $callback->($self, $cfg->{$canonical_name}, $def, \@curpath);
+          }
         }
         
         if (defined $def->{callback}) {
@@ -224,7 +236,12 @@ Config::Validate - Validate data structures generated from configuration files.
     if (not defined $types[$$self]{$def->{keytype}}) {
       die "Invalid keytype '$def->{keytype}' specified for " . _mkpath(@$path);
     }
-    
+
+    if (ref $value ne 'HASH') {
+      die sprintf("%s: should be a 'HASH', but instead is '%s'", 
+                  _mkpath($path), ref $value);
+    }
+
     while (my ($k, $v) = each %$value) {
       my @curpath = (@$path, $k);
       print "Validating ", _mkpath(@curpath), "\n" if $debug[$$self];
@@ -242,11 +259,23 @@ Config::Validate - Validate data structures generated from configuration files.
     if (not defined $def->{subtype}) {
       die "No subtype specified for " . _mkpath(@$path);
     }
-    
+
     if (not defined $types[$$self]{$def->{subtype}}) {
       die "Invalid subtype '$def->{subtype}' specified for " . _mkpath(@$path);
     }
     
+    if (ref $value eq 'SCALAR' and $array_allows_scalar[$$self]) {
+      $$value = [ $$value ];
+      $value = $$value;
+    } elsif (ref $value eq 'REF' and ref $$value eq 'ARRAY') {
+      $value = $$value;
+    }
+
+    if (ref $value ne 'ARRAY') {
+      die sprintf("%s: should be a 'ARRAY', but instead is '%s'", 
+                  _mkpath($path), ref $value);
+    }
+
     foreach my $item (@$value) {
       print "Validating ", _mkpath($path), "\n" if $debug[$$self];
       my $callback = $types[$$self]{$def->{subtype}}{validate};
@@ -256,8 +285,24 @@ Config::Validate - Validate data structures generated from configuration files.
 
   sub _validate_integer {
     my ($self, $value, $def, $path) = @_;
-    if ($value !~ /^ \d+ $/xo) {
+    if ($value !~ /^ -? \d+ $/xo) {
       die sprintf("%s should be an integer, but has value of '%s' instead",
+                  _mkpath($path), $value);
+    }
+    if (defined $def->{max} and $value > $def->{max}) {
+      die sprintf("%s: %d is larger than the maximum allowed (%d)", 
+                  _mkpath($path), $value, $def->{max});
+    }
+    if (defined $def->{min} and $value < $def->{min}) {
+      die sprintf("%s: %d is smaller than the minimum allowed (%d)", 
+                  _mkpath($path), $value, $def->{max});
+    }
+  }
+
+  sub _validate_float {
+    my ($self, $value, $def, $path) = @_;
+    if ($value !~ /^ -? \d*\.?\d+ $/xo) {
+      die sprintf("%s should be an float, but has value of '%s' instead",
                   _mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
@@ -329,7 +374,7 @@ Config::Validate - Validate data structures generated from configuration files.
     use Data::Validate::Domain qw(is_domain);
     
     my $rc = is_domain($value, { domain_allow_single_label => 1,
-                                 domain_private_tld => 1
+                                 domain_private_tld => qr/.*/,
                                 }
                       );
     return if $rc;
@@ -343,8 +388,8 @@ Config::Validate - Validate data structures generated from configuration files.
     use Data::Validate::Domain qw(is_hostname);
     
     my $rc = is_hostname($value, { domain_allow_single_label => 1,
-                                 domain_private_tld => 1
-                                }
+                                   domain_private_tld => qr/\. acmedns $/xi,
+                                  }
                       );
     return if $rc;
 
