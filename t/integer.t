@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 6;
 use Config::General;
 use Data::Dumper;
 
@@ -15,6 +15,13 @@ my $cv = Config::Validate->new;
   my $value = { testinteger => 1 };
   eval { $cv->validate($value) };
   is ($@, '', 'normal case succeeded');
+}
+
+{ # negative test case
+  $cv->schema({ testinteger => { type => 'integer' }});
+  my $value = { testinteger => -1 };
+  eval { $cv->validate($value) };
+  is ($@, '', 'negative case succeeded');
 }
 
 { # success w/size limits
