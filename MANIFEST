@@ -1,11 +1,9 @@
 Changes
-MANIFEST
-Makefile.PL
-README
-lib/
-lib/Config/
 lib/Config/Validate.pm
-t/
+Makefile.PL
+MANIFEST			This list of files
+META.yml
+README
 t/alias.t
 t/array.t
 t/basic.t
