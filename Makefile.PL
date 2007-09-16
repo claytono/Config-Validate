@@ -11,7 +11,13 @@ my $do_coverage = ($@ eq '');
 WriteMakefile(
     NAME              => 'Config::Validate',
     VERSION_FROM      => 'lib/Config/Validate.pm', # finds $VERSION
-    PREREQ_PM         => {}, # e.g., Module::Name => 1.1
+    PREREQ_PM         => { 'Config::General' => 0,
+			   'Object::InsideOut' => 0,
+			   'Scalar::Util::Clone' => 0,
+			   'Params::Validate' => 0,
+			   'Data::Validate::Domain' => 0 # Should be optional
+			   
+    }, # e.g., Module::Name => 1.1
     dist => {
       COMPRESS => 'bzip2 --best -f',
       SUFFIX => '.bz2'
