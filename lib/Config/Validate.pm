@@ -2,6 +2,9 @@ package Config::Validate;
 use strict;
 use warnings;
 
+# There is too much DWIMery here for this to be practical
+## no critic (RequireArgUnpacking)
+
 {
   use Object::InsideOut;
 
