@@ -77,8 +77,8 @@ Config::Validate - Validate data structures generated from configuration files.
   sub add_default_type {
     # this is a function, but if it's called as a method, that's
     # fine too.
-    shift if isa($_[0], 'Config::Validate');
-    shift if defined $_ and $@[0] eq 'Config::Validate';
+    shift if @_ and Config::Validate->isa($_[0]);
+    shift if @_ and $_[0] eq 'Config::Validate';
 
     my %p = _parse_add_type_params(@_);
     
@@ -125,7 +125,7 @@ Config::Validate - Validate data structures generated from configuration files.
 
   sub validate {
     my ($self, $cfg);
-    if (isa($_[0], 'Config::Validate')) {
+    if (Config::Validate->isa($_[0])) {
       ($self, $cfg) = @_;
     } else {
       my $schema;
