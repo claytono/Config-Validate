@@ -54,6 +54,7 @@ srpm: \$(DISTVNAME).tar\$(SUFFIX)
     print "Found ExtUtils::MakeMaker::Coverage, including in Makefile\n";
     return ExtUtils::MakeMaker::Coverage::testcover() . $fragment;
   } else {
+    print "Could not find ExtUtils::MakeMaker::Coverage, so testcover is disabled.\n";
     return $fragment;
   }
 }
