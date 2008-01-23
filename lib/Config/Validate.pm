@@ -12,7 +12,7 @@ use warnings;
   use Scalar::Util::Clone qw(clone);
   use UNIVERSAL qw(isa);
   use Params::Validate qw(validate_with :types);
-  use Carp;
+  use Carp::Clan;
 
   use Exporter qw(import);
   our @EXPORT_OK = qw(validate);

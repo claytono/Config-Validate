@@ -15,7 +15,7 @@ my $cv = Config::Validate->new;
 
   $cv->schema({test => {}});
   eval { $cv->validate({blah => 1}) };
-  like($@, qr/^No type specified for \[\/test\]/, 
+  like($@, qr/No type specified for \[\/test\]/, 
        'no type specified: failed (expected)');
 }
 
@@ -23,7 +23,7 @@ my $cv = Config::Validate->new;
 
   $cv->schema({test => { type => 'blah' }});
   eval { $cv->validate({blah => 1}) };
-  like($@, qr/^Invalid type 'blah' specified for \[\/test\]/, 
+  like($@, qr/Invalid type 'blah' specified for \[\/test\]/, 
        'no type specified: failed (expected)');
 }
 

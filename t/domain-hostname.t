@@ -28,7 +28,7 @@ my $cv = Config::Validate->new;
     my $value = { testdomain => $domain };
     eval { $cv->validate($value) };
     my $error = quotemeta("[/testdomain]: '$domain' is not a valid domain name.");
-    like($@, "/^$error/", "invalid domain case succeeded as expected ($domain)");
+    like($@, "/$error/", "invalid domain case succeeded as expected ($domain)");
   }
 }
 
@@ -50,7 +50,7 @@ my $cv = Config::Validate->new;
     my $value = { testhostname => $hostname };
     eval { $cv->validate($value) };
     my $error = quotemeta("[/testhostname]: '$hostname' is not a valid hostname.");
-    like($@, "/^$error/", "invalid hostname case succeeded as expected ($hostname)");
+    like($@, "/$error/", "invalid hostname case succeeded as expected ($hostname)");
   }
 }
 
