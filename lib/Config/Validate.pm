@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 # There is too much DWIMery here for this to be practical
-## no critic (RequireArgUnpacking)
+## no critic (RequireArgUnpacking, ProhibitDoubleSigils)
 
 {
   use Object::InsideOut;
@@ -20,12 +20,6 @@ use warnings;
   
   our $VERSION = '0.01';
 
-=head1 NAME
-
-Config::Validate - Validate data structures generated from configuration files.
-
-=cut
-  
   my @schema :Field :Accessor(schema) :Arg(schema);
   my @array_allows_scalar :Field 
                           :Accessor(array_allows_scalar) 
@@ -426,6 +420,14 @@ Config::Validate - Validate data structures generated from configuration files.
 }
 1;
 
+__END__
+
+=head1 NAME
+
+Config::Validate - Validate data structures generated from configuration files.
+
+=cut
+  
 =head1 AUTHOR
 
 Clayton O'Neill, E<lt>cpan3.20.coneill@xoxy.netE<gt>
