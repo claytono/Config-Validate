@@ -158,32 +158,12 @@ Config::Validate - Validate data structures generated from configuration files.
 
     while (my ($canonical_name, $def) = each %$schema) {
       my @curpath = (@$path, $canonical_name);
-      my @names = ($canonical_name);
-      
-      if (defined $def->{alias}) {
-        if (ref $def->{alias} eq 'ARRAY') {
-          push(@names, @{$def->{alias}});
-        } elsif (ref $def->{alias} eq '') {
-          push(@names, $def->{alias});
-        } else {
-          croak sprintf("Alias defined for %s is type %s, but must be " . 
-                      "either an array reference, or scalar",
-                      _mkpath(@curpath), ref $def->{alias},
-                     );
-        }
-      }
-      
+      my @names = _get_aliases($canonical_name, $def, @curpath);
+      $self->_check_definition_type($def, @curpath);
+
       my $found = 0;
       foreach my $name (@names) {
-        if (not defined $def->{type}) {
-          croak "No type specified for " . _mkpath(@curpath);
-        }
-        
-        if (not defined $types[$$self]{$def->{type}}) {
-          croak "Invalid type '$def->{type}' specified for " . _mkpath(@curpath);
-        }
-        
-         next unless defined $cfg->{$name};
+        next unless defined $cfg->{$name};
         
         if ($name ne $canonical_name) {
           $cfg->{$canonical_name} = $cfg->{$name};
@@ -232,6 +212,37 @@ Config::Validate - Validate data structures generated from configuration files.
       croak sprintf("%s: the following unknown items were found: %s",
                   _mkpath($path), join(', ', @unknown));
     }
+  }
+  
+  sub _get_aliases {
+    my ($canonical_name, $definition, @curpath) = @_;
+    
+    my @names = ($canonical_name);
+    if (defined $definition->{alias}) {
+      if (ref $definition->{alias} eq 'ARRAY') {
+        push(@names, @{$definition->{alias}});
+      } elsif (ref $definition->{alias} eq '') {
+        push(@names, $definition->{alias});
+      } else {
+        croak sprintf("Alias defined for %s is type %s, but must be " . 
+                      "either an array reference, or scalar",
+                      _mkpath(@curpath), ref $definition->{alias},
+                     );
+      }
+    }
+    return @names;
+  }
+
+  sub _check_definition_type {
+    my ($self, $definition, @curpath) = @_;
+    if (not defined $definition->{type}) {
+      croak "No type specified for " . _mkpath(@curpath);
+    }
+    
+    if (not defined $types[$$self]{$definition->{type}}) {
+      croak "Invalid type '$definition->{type}' specified for " . _mkpath(@curpath);
+    }
+    return;
   }
 
   sub _mkpath {
