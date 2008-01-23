@@ -9,6 +9,7 @@ use warnings;
   use Scalar::Util::Clone qw(clone);
   use UNIVERSAL qw(isa);
   use Params::Validate qw(validate_with :types);
+  use Carp;
 
   use Exporter qw(import);
   our @EXPORT_OK = qw(validate);
@@ -42,7 +43,7 @@ Config::Validate - Validate data structures generated from configuration files.
     file      => { validate => \&_validate_file },
     domain    => { validate => \&_validate_domain },
     hostname  => { validate => \&_validate_hostname },
-    nested    => { validate => sub { die "'nested' is not valid here"; }},
+    nested    => { validate => sub { croak "'nested' is not valid here"; }},
   );
 
   sub _init :Init {
@@ -82,13 +83,13 @@ Config::Validate - Validate data structures generated from configuration files.
     my %p = _parse_add_type_params(@_);
     
     if (defined $default_types{$p{name}}) {
-      die "Attempted to add type '$p{name}' that already exists";
+      croak "Attempted to add type '$p{name}' that already exists";
     }
     
     my $type = clone(\%p);
     delete $type->{name};
     if (keys %$type == 0) {
-      die "Attempted to define a type with no callbacks";
+      croak "Attempted to define a type with no callbacks";
     }
     $default_types{$p{name}} = $type;
     return;
@@ -99,13 +100,13 @@ Config::Validate - Validate data structures generated from configuration files.
     my %p = _parse_add_type_params(@_);
     
     if (defined $types[$$self]{$p{name}}) {
-      die "Attempted to add type '$p{name}' that already exists";
+      croak "Attempted to add type '$p{name}' that already exists";
     }
     
     my $type = clone(\%p);
     delete $type->{name};
     if (keys %$type == 0) {
-      die "Attempted to define a type with no callbacks";
+      croak "Attempted to define a type with no callbacks";
     }
     $types[$$self]{$p{name}} = $type;
     return;
@@ -154,7 +155,7 @@ Config::Validate - Validate data structures generated from configuration files.
         } elsif (ref $def->{alias} eq '') {
           push(@names, $def->{alias});
         } else {
-          die sprintf("Alias defined for %s is type %s, but must be " . 
+          croak sprintf("Alias defined for %s is type %s, but must be " . 
                       "either an array reference, or scalar",
                       _mkpath(@curpath), ref $def->{alias},
                      );
@@ -164,11 +165,11 @@ Config::Validate - Validate data structures generated from configuration files.
       my $found = 0;
       foreach my $name (@names) {
         if (not defined $def->{type}) {
-          die "No type specified for " . _mkpath(@curpath);
+          croak "No type specified for " . _mkpath(@curpath);
         }
         
         if (not defined $types[$$self]{$def->{type}}) {
-          die "Invalid type '$def->{type}' specified for " . _mkpath(@curpath);
+          croak "Invalid type '$def->{type}' specified for " . _mkpath(@curpath);
         }
         
          next unless defined $cfg->{$name};
@@ -195,7 +196,7 @@ Config::Validate - Validate data structures generated from configuration files.
         
         if (defined $def->{callback}) {
           if (ref $def->{callback} ne 'CODE') {
-            die sprintf("%s: callback specified is not a code reference", 
+            croak sprintf("%s: callback specified is not a code reference", 
                         _mkpath(@curpath));
           }
           $def->{callback}($self, $cfg->{$canonical_name}, $def, \@curpath);
@@ -211,13 +212,13 @@ Config::Validate - Validate data structures generated from configuration files.
       delete $orig->{$canonical_name};
 
       if (not $found and (not defined $def->{optional} or not $def->{optional})) {
-        die "Required item " . _mkpath(@curpath) . " was not found";
+        croak "Required item " . _mkpath(@curpath) . " was not found";
       }
     }
 
     my @unknown = sort keys %$orig;
     if (@unknown != 0) {
-      die sprintf("%s: the following unknown items were found: %s",
+      croak sprintf("%s: the following unknown items were found: %s",
                   _mkpath($path), join(', ', @unknown));
     }
   }
@@ -232,15 +233,15 @@ Config::Validate - Validate data structures generated from configuration files.
     my ($self, $value, $def, $path) = @_;
     
     if (not defined $def->{keytype}) {
-      die "No keytype specified for " . _mkpath(@$path);
+      croak "No keytype specified for " . _mkpath(@$path);
     }
     
     if (not defined $types[$$self]{$def->{keytype}}) {
-      die "Invalid keytype '$def->{keytype}' specified for " . _mkpath(@$path);
+      croak "Invalid keytype '$def->{keytype}' specified for " . _mkpath(@$path);
     }
 
     if (ref $value ne 'HASH') {
-      die sprintf("%s: should be a 'HASH', but instead is '%s'", 
+      croak sprintf("%s: should be a 'HASH', but instead is '%s'", 
                   _mkpath($path), ref $value);
     }
 
@@ -260,11 +261,11 @@ Config::Validate - Validate data structures generated from configuration files.
     my ($self, $value, $def, $path) = @_;
     
     if (not defined $def->{subtype}) {
-      die "No subtype specified for " . _mkpath(@$path);
+      croak "No subtype specified for " . _mkpath(@$path);
     }
 
     if (not defined $types[$$self]{$def->{subtype}}) {
-      die "Invalid subtype '$def->{subtype}' specified for " . _mkpath(@$path);
+      croak "Invalid subtype '$def->{subtype}' specified for " . _mkpath(@$path);
     }
     
     if (ref $value eq 'SCALAR' and $array_allows_scalar[$$self]) {
@@ -275,7 +276,7 @@ Config::Validate - Validate data structures generated from configuration files.
     }
 
     if (ref $value ne 'ARRAY') {
-      die sprintf("%s: should be a 'ARRAY', but instead is '%s'", 
+      croak sprintf("%s: should be a 'ARRAY', but instead is '%s'", 
                   _mkpath($path), ref $value);
     }
 
@@ -290,15 +291,15 @@ Config::Validate - Validate data structures generated from configuration files.
   sub _validate_integer {
     my ($self, $value, $def, $path) = @_;
     if ($value !~ /^ -? \d+ $/xo) {
-      die sprintf("%s should be an integer, but has value of '%s' instead",
+      croak sprintf("%s should be an integer, but has value of '%s' instead",
                   _mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
-      die sprintf("%s: %d is larger than the maximum allowed (%d)", 
+      croak sprintf("%s: %d is larger than the maximum allowed (%d)", 
                   _mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
-      die sprintf("%s: %d is smaller than the minimum allowed (%d)", 
+      croak sprintf("%s: %d is smaller than the minimum allowed (%d)", 
                   _mkpath($path), $value, $def->{max});
     }
   }
@@ -306,15 +307,15 @@ Config::Validate - Validate data structures generated from configuration files.
   sub _validate_float {
     my ($self, $value, $def, $path) = @_;
     if ($value !~ /^ -? \d*\.?\d+ $/xo) {
-      die sprintf("%s should be an float, but has value of '%s' instead",
+      croak sprintf("%s should be an float, but has value of '%s' instead",
                   _mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
-      die sprintf("%s: %d is larger than the maximum allowed (%d)", 
+      croak sprintf("%s: %d is larger than the maximum allowed (%d)", 
                   _mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
-      die sprintf("%s: %d is smaller than the minimum allowed (%d)", 
+      croak sprintf("%s: %d is smaller than the minimum allowed (%d)", 
                   _mkpath($path), $value, $def->{max});
     }
   }
@@ -324,19 +325,19 @@ Config::Validate - Validate data structures generated from configuration files.
     
     if (defined $def->{maxlen}) {
       if (length($value) > $def->{maxlen}) {
-        die sprintf("%s: length of string is %d, but must be less than %d",
+        croak sprintf("%s: length of string is %d, but must be less than %d",
                     _mkpath($path), length($value), $def->{maxlen});
       }
     }
     if (defined $def->{minlen}) {
       if (length($value) < $def->{minlen}) {
-        die sprintf("%s: length of string is %d, but must be greater than %d",
+        croak sprintf("%s: length of string is %d, but must be greater than %d",
                     _mkpath($path), length($value), $def->{minlen});
       }
     }
     if (defined $def->{regex}) {
       if ($value !~ $def->{regex}) {
-        die sprintf("%s: regex (%s) didn't match '%s'", _mkpath($path),
+        croak sprintf("%s: regex (%s) didn't match '%s'", _mkpath($path),
                     $def->{regex}, $value);
       }
     }
@@ -351,7 +352,7 @@ Config::Validate - Validate data structures generated from configuration files.
     $value = 0 if grep { lc($value) eq $_ } @false;
     
     if ($value !~ /^ [01] $/x) {
-      die sprintf("%s: invalid value '%s', must be: %s", _mkpath($path),
+      croak sprintf("%s: invalid value '%s', must be: %s", _mkpath($path),
                   $value, join(', ', (0, 1, @true, @false)));
     }
   }
@@ -360,7 +361,7 @@ Config::Validate - Validate data structures generated from configuration files.
     my ($self, $value, $def, $path) = @_;
 
     if (not -d $value) {
-      die sprintf("%s: '%s' is not a directory", _mkpath($path), $value)
+      croak sprintf("%s: '%s' is not a directory", _mkpath($path), $value)
     }
   }
   
@@ -368,7 +369,7 @@ Config::Validate - Validate data structures generated from configuration files.
     my ($self, $value, $def, $path) = @_;
 
     if (not -f $value and not -l $value) {
-      die sprintf("%s: '%s' is not a file", _mkpath($path), $value)
+      croak sprintf("%s: '%s' is not a file", _mkpath($path), $value)
     }
   }
 
@@ -383,7 +384,7 @@ Config::Validate - Validate data structures generated from configuration files.
                       );
     return if $rc;
 
-    die sprintf("%s: '%s' is not a valid domain name.", _mkpath($path), $value);
+    croak sprintf("%s: '%s' is not a valid domain name.", _mkpath($path), $value);
   }
   
   sub _validate_hostname {
@@ -397,7 +398,7 @@ Config::Validate - Validate data structures generated from configuration files.
                       );
     return if $rc;
 
-    die sprintf("%s: '%s' is not a valid hostname.", _mkpath($path), $value);
+    croak sprintf("%s: '%s' is not a valid hostname.", _mkpath($path), $value);
   }
   
 }
