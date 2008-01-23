@@ -333,11 +333,11 @@ Config::Validate - Validate data structures generated from configuration files.
                   _mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
-      croak sprintf("%s: %d is larger than the maximum allowed (%d)", 
+      croak sprintf("%s: %f is larger than the maximum allowed (%f)", 
                   _mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
-      croak sprintf("%s: %d is smaller than the minimum allowed (%d)", 
+      croak sprintf("%s: %f is smaller than the minimum allowed (%f)", 
                   _mkpath($path), $value, $def->{max});
     }
   }
