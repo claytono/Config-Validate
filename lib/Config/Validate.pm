@@ -1,9 +1,10 @@
 package Config::Validate;
+use strict;
+use warnings;
+
 {
   use Object::InsideOut;
 
-  use strict;
-  use warnings;
   use Data::Dumper;
   use Scalar::Util::Clone qw(clone);
   use UNIVERSAL qw(isa);
@@ -118,6 +119,7 @@ Config::Validate - Validate data structures generated from configuration files.
         $value->{$callback}();
       }
     }
+    return;
   }
 
   sub validate {
@@ -251,6 +253,7 @@ Config::Validate - Validate data structures generated from configuration files.
         $self->_validate($v, $def->{child}, \@curpath);
       }
     }
+    return;
   }
 
   sub _validate_array {
@@ -281,6 +284,7 @@ Config::Validate - Validate data structures generated from configuration files.
       my $callback = $types[$$self]{$def->{subtype}}{validate};
       $callback->($self, $item, $def, $path);
     }
+    return;
   }
 
   sub _validate_integer {
