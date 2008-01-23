@@ -379,7 +379,7 @@ Config::Validate - Validate data structures generated from configuration files.
     use Data::Validate::Domain qw(is_domain);
     
     my $rc = is_domain($value, { domain_allow_single_label => 1,
-                                 domain_private_tld => qr/.*/,
+                                 domain_private_tld => qr/.*/x,
                                 }
                       );
     return if $rc;
