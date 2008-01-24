@@ -426,15 +426,28 @@ __END__
 
 Config::Validate - Validate data structures generated from configuration files.
 
-=cut
-  
+=head1 VERSION
+
+Version 0.02 
+
+=head1 DESCRIPTION
+
+This module is intended to be used to validate configuration data that
+has been read in already and is in a Perl data structure.  It does not
+handle reading or parsing configuration files since there are a
+plethora of available modules on CPAN to do that task.  Instead if
+concentrates on verifying that the data read is correct, and providing
+defaults where appropriate.  It also allows you to specify that a
+given configuration key may be available under several aliases, and
+have those renamed to the canonical name automatically.
+
 =head1 AUTHOR
 
 Clayton O'Neill, E<lt>cpan3.20.coneill@xoxy.netE<gt>
 
-=head1 COPYRIGHT AND LICENSE
+=head1 LICENSE AND COPYRIGHT
 
-Copyright (C) 2007 by Clayton O'Neill
+Copyright (C) 2007-2008 by Clayton O'Neill
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.5 or,
