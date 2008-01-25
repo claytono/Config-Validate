@@ -172,7 +172,7 @@ use warnings;
           my $typeinfo = $types[$$self]{$def->{type}};
           my $callback = $typeinfo->{validate};
           
-          if (defined $typeinfo->{byreference} and $typeinfo->{byreference}) {
+          if ($typeinfo->{byreference}) {
             $callback->($self, \$cfg->{$canonical_name}, $def, \@curpath);
           } else {
             $callback->($self, $cfg->{$canonical_name}, $def, \@curpath);
