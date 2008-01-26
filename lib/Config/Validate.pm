@@ -43,14 +43,17 @@ use warnings;
     nested    => { validate => sub { croak "'nested' is not valid here"; }},
   );
 
+  my %types = %default_types;
+
   sub _init :Init {
     my ($self, $args) = @_;
     
-    $types[$$self] = clone(\%default_types);
+    $types[$$self] = clone(\%types);
     return;
   }
 
   sub _parse_add_type_params {
+    # XXX: This should be updated to allow 'byreference'
     my $spec = { name => { type => SCALAR },
                  validate => { type => CODEREF,
                                optional => 1,
@@ -77,11 +80,11 @@ use warnings;
     eval {
       shift if $_[0]->isa('Config::Validate');
     };
-    shift if @_ and $_[0] eq 'Config::Validate';
+    shift if @_ == 2 and $_[0] eq 'Config::Validate';
 
     my %p = _parse_add_type_params(@_);
     
-    if (defined $default_types{$p{name}}) {
+    if (defined $types{$p{name}}) {
       croak "Attempted to add type '$p{name}' that already exists";
     }
     
@@ -90,7 +93,8 @@ use warnings;
     if (keys %$type == 0) {
       croak "Attempted to define a type with no callbacks";
     }
-    $default_types{$p{name}} = $type;
+    $types{$p{name}} = $type;
+
     return;
   }
 
@@ -111,6 +115,11 @@ use warnings;
     return;
   }
 
+  sub reset_default_types {
+    %types = %default_types;
+    return;
+  }
+
   sub _type_callback {
     my ($self, $callback, @args) = @_;
 
@@ -120,7 +129,7 @@ use warnings;
       }
     }
     return;
-  }
+  }  
 
   sub validate {
     my ($self, $cfg);
@@ -175,7 +184,7 @@ use warnings;
           if ($typeinfo->{byreference}) {
             $callback->($self, \$cfg->{$canonical_name}, $def, \@curpath);
           } else {
-            $callback->($self, $cfg->{$canonical_name}, $def, \@curpath);
+            $callback->($self,  $cfg->{$canonical_name}, $def, \@curpath);
           }
         }
         
@@ -234,8 +243,15 @@ use warnings;
     }
     
     if (not defined $types[$$self]{$definition->{type}}) {
-      croak "Invalid type '$definition->{type}' specified for " . _mkpath(@curpath);
+      croak "Invalid type '$definition->{type}' specified for ", 
+        _mkpath(@curpath);
     }
+
+    if (not defined $types[$$self]{$definition->{type}}{validate}) {
+      croak "No validation hook defined for $definition->{type} for ",
+        _mkpath(@curpath);
+    }
+
     return;
   }
 
