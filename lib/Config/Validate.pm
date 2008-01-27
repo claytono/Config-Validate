@@ -114,7 +114,7 @@ use warnings;
     my $type = clone(\%p);
     delete $type->{name};
     if (keys %$type == 0) {
-      croak "Attempted to define a type with no callbacks";
+      croak "No callbacks defined for type '$p{name}'";
     }
     $types[$$self]{$p{name}} = $type;
     return;
