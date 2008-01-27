@@ -141,7 +141,7 @@ use warnings;
 
     croak "Config::Validate::validate requires two arguments" unless @_ == 2;
 
-    if ($@ and blessed $_[0]) {
+    if (blessed $_[0]) {
       ($self, $cfg) = @_;
     } else {
       my $schema;
