@@ -181,12 +181,14 @@ use warnings;
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
           my $typeinfo = $types[$$self]{$def->{type}};
-          my $callback = $typeinfo->{validate};
-          
-          if ($typeinfo->{byreference}) {
-            $callback->($self, \$cfg->{$canonical_name}, $def, \@curpath);
-          } else {
-            $callback->($self,  $cfg->{$canonical_name}, $def, \@curpath);
+          if (defined $typeinfo->{validate}) {
+            my $callback = $typeinfo->{validate};
+            
+            if ($typeinfo->{byreference}) {
+              $callback->($self, \$cfg->{$canonical_name}, $def, \@curpath);
+            } else {
+              $callback->($self,  $cfg->{$canonical_name}, $def, \@curpath);
+            }
           }
         }
         
@@ -246,11 +248,6 @@ use warnings;
 
     if (not defined $types[$$self]{$definition->{type}}) {
       croak "Invalid type '$definition->{type}' specified for ", 
-        _mkpath(@curpath);
-    }
-
-    if (not defined $types[$$self]{$definition->{type}}{validate}) {
-      croak "No validation hook defined for $definition->{type} for ",
         _mkpath(@curpath);
     }
 
