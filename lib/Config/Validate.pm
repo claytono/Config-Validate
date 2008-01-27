@@ -180,16 +180,7 @@ use warnings;
         if (lc($def->{type}) eq 'nested') {
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
-          my $typeinfo = $types[$$self]{$def->{type}};
-          if (defined $typeinfo->{validate}) {
-            my $callback = $typeinfo->{validate};
-            
-            if ($typeinfo->{byreference}) {
-              $callback->($self, \$cfg->{$canonical_name}, $def, \@curpath);
-            } else {
-              $callback->($self,  $cfg->{$canonical_name}, $def, \@curpath);
-            }
-          }
+          $self->_invoke_validate_callback($cfg, $canonical_name, $def, \@curpath);
         }
         
         if (defined $def->{callback}) {
@@ -219,6 +210,25 @@ use warnings;
       croak sprintf("%s: the following unknown items were found: %s",
                   _mkpath($path), join(', ', @unknown));
     }
+  }
+
+  sub _invoke_validate_callback {
+    my ($self, $cfg, $canonical_name, $def, $curpath) = @_;
+
+    my $typeinfo = $types[$$self]{$def->{type}};
+    my $callback = $typeinfo->{validate};
+
+    if (not defined $callback) {
+      croak("No callback defined for type '$def->{type}'");
+    }
+      
+    if ($typeinfo->{byreference}) {
+      $callback->($self, \$cfg->{$canonical_name}, $def, $curpath);
+    } else {
+      $callback->($self,  $cfg->{$canonical_name}, $def, $curpath);
+    }
+      
+    return;
   }
   
   sub _get_aliases {
