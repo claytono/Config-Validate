@@ -16,6 +16,18 @@ sub teardown :Test(teardown) {
   Config::Validate::reset_default_types();
 }
 
+sub no_args :Test {
+  eval { Config::Validate::add_default_type(); };
+  like($@, qr/Mandatory parameter 'name' missing in call/i, 
+       "No argument test")
+}
+
+sub name_only :Test {
+  eval { Config::Validate->add_default_type(name => 'name_only'); };
+  like($@, qr/No callbacks defined for type 'name_only'/i, 
+       "Name only test")
+}
+
 sub init_hook :Test(2) {
   my $init_ran = 0;
   Config::Validate->add_default_type(name => 'init_hook',
@@ -44,13 +56,10 @@ sub finish_hook :Test(2) {
   return;
 }
 
-sub class_method_validate :Test(3) {
+sub class_method_validate :Test(2) {
   my $counter = 0;
   Config::Validate->add_default_type(name => 'class_method_validate',
-                                     validate => sub {
-                                       is($counter, 0, 'class: validate ran');
-                                       $counter++;
-                                     },
+                                     validate => sub { $counter++ },
                                     ); 
 
   my $cv = Config::Validate->new(schema => 
@@ -66,13 +75,10 @@ sub class_method_validate :Test(3) {
   return;
 }
 
-sub function_validate :Test(3) {
+sub function_validate :Test(2) {
   my $counter = 0;
   Config::Validate::add_default_type(name => 'function_validate',
-                                     validate => sub {
-                                       is($counter, 0, 'function: validate ran');
-                                       $counter++;
-                                     },
+                                     validate => sub { $counter++ },
                                     );
 
   my $cv = Config::Validate->new(schema => 
@@ -88,24 +94,31 @@ sub function_validate :Test(3) {
   return;
 }
 
-sub instance_validate :Test(3) {
-  my $counter = 0;
-  Config::Validate::add_default_type(name => 'instance_validate',
-                                     validate => sub {
-                                       is($counter, 0, 'instance: validate ran');
-                                       $counter++;
-                                     },
-                                    );
+sub instance_validate :Test(4) {
+  my $cv = Config::Validate->new();
 
-  my $cv = Config::Validate->new(schema => 
-                                 { test => { 
-                                   type => 'instance_validate' },
-                                 }
-                                );
+  my $counter = 0;
+  $cv->add_default_type(name => 'instance_validate',
+                        validate => sub { $counter++ },
+                       );
+
+  $cv->schema({ test => { type => 'instance_validate' }});
 
   eval { $cv->validate({test => 1}); };
   is($@, '', "validate completed without error");
   is($counter, 1, "callback ran");
+
+  # Check to make sure it was added to the default table also, by
+  # creating a new instance.
+  $cv = Config::Validate->new(schema => 
+                              { test => { 
+                                type => 'instance_validate' },
+                              }
+                             );
+
+  eval { $cv->validate({test => 1}); };
+  is($@, '', "validate completed without error second time");
+  is($counter, 2, "callback ran second time");
 
   return;
 }

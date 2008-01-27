@@ -10,7 +10,7 @@ use warnings;
 
   use Data::Dumper;
   use Scalar::Util::Clone qw(clone);
-  use UNIVERSAL qw(isa);
+  use Scalar::Util qw(blessed);
   use Params::Validate qw(validate_with :types);
   use Carp::Clan;
 
@@ -77,23 +77,28 @@ use warnings;
   sub add_default_type {
     # this is a function, but if it's called as a method, that's
     # fine too.
-    eval {
-      shift if $_[0]->isa('Config::Validate');
-    };
-    shift if @_ == 2 and $_[0] eq 'Config::Validate';
+    my $self;
+    if (@_) {
+      $self = shift if blessed $_[0];
+      shift if $_[0] eq 'Config::Validate';
+    }
+      
+    my %p = _parse_add_type_params(@_);    
+    if ($self) {
+      $self->add_type(%p);
+    }
 
-    my %p = _parse_add_type_params(@_);
-    
     if (defined $types{$p{name}}) {
       croak "Attempted to add type '$p{name}' that already exists";
     }
-    
+
     my $type = clone(\%p);
     delete $type->{name};
     if (keys %$type == 0) {
-      croak "Attempted to define a type with no callbacks";
+      croak "No callbacks defined for type '$p{name}'";
     }
     $types{$p{name}} = $type;
+    
 
     return;
   }
@@ -136,12 +141,9 @@ use warnings;
 
     croak "Config::Validate::validate requires two arguments" unless @_ == 2;
 
-    eval { 
-      if ($_[0]->isa('Config::Validate')) {
-        ($self, $cfg) = @_;
-      }
-    };
-    if (not defined $self) {
+    if ($@ and blessed $_[0]) {
+      ($self, $cfg) = @_;
+    } else {
       my $schema;
       ($cfg, $schema) = @_;
       $self = Config::Validate->new(schema => $schema);
@@ -241,7 +243,7 @@ use warnings;
     if (not defined $definition->{type}) {
       croak "No type specified for " . _mkpath(@curpath);
     }
-    
+
     if (not defined $types[$$self]{$definition->{type}}) {
       croak "Invalid type '$definition->{type}' specified for ", 
         _mkpath(@curpath);
