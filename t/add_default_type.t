@@ -36,7 +36,7 @@ sub init_hook :Test(2) {
                                      init => sub { $init_ran++ },
                                     ); 
 
-  my $cv = Config::Validate->new(schema => {test => {type => 'init_hook'}});
+  my $cv = Config::Validate->new(schema => {test => {type => 'integer'}});
   eval { $cv->validate({test => 1}); };
   is($@, '', "validate completed without error");
   ok($init_ran, "init ran");
@@ -50,7 +50,7 @@ sub finish_hook :Test(2) {
                                      finish => sub { $finish_ran++ },
                                     ); 
 
-  my $cv = Config::Validate->new(schema => {test => {type => 'finish_hook'}});
+  my $cv = Config::Validate->new(schema => {test => {type => 'integer'}});
   eval { $cv->validate({test => 1}); };
   is($@, '', "validate completed without error");
   ok($finish_ran, "finish ran");
