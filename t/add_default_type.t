@@ -5,7 +5,7 @@ use warnings;
 
 Test::Class->runtests;
 
-package Test::TypePlugin;
+package Test::AddDefaultType;
 
 use base qw(Test::Class);
 use Test::More;
