@@ -19,13 +19,15 @@ sub teardown :Test(teardown) {
 sub no_args :Test {
   eval { Config::Validate::add_default_type(); };
   like($@, qr/Mandatory parameter 'name' missing in call/i, 
-       "No argument test")
+       "No argument test");
+  return;
 }
 
 sub name_only :Test {
   eval { Config::Validate->add_default_type(name => 'name_only'); };
   like($@, qr/No callbacks defined for type 'name_only'/i, 
-       "Name only test")
+       "Name only test");
+  return;
 }
 
 sub init_hook :Test(2) {
@@ -34,7 +36,7 @@ sub init_hook :Test(2) {
                                      init => sub { $init_ran++ },
                                     ); 
 
-  my $cv = Config::Validate->new(schema => {test => {type => 'integer'}});
+  my $cv = Config::Validate->new(schema => {test => {type => 'init_hook'}});
   eval { $cv->validate({test => 1}); };
   is($@, '', "validate completed without error");
   ok($init_ran, "init ran");
@@ -48,7 +50,7 @@ sub finish_hook :Test(2) {
                                      finish => sub { $finish_ran++ },
                                     ); 
 
-  my $cv = Config::Validate->new(schema => {test => {type => 'integer'}});
+  my $cv = Config::Validate->new(schema => {test => {type => 'finish_hook'}});
   eval { $cv->validate({test => 1}); };
   is($@, '', "validate completed without error");
   ok($finish_ran, "finish ran");
