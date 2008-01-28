@@ -13,6 +13,19 @@ use File::Temp qw(tempdir tmpnam);
 
 BEGIN { use_ok('Config::Validate', 'validate') };
 
+sub missing_file :Test {
+  my $filename = tmpnam;
+  while (-f $filename or -l $filename) {
+    $filename = tmpnam;
+  }
+  my $schema = { testfile => { type => 'file' }};
+  my $value = { testfile => $filename };
+  eval { validate($value, $schema) };
+  like($@, qr/is not a file/, "Missing file fails (expected)");
+  
+  return;
+}
+
 sub normal_file :Test {
   my $tempfile = File::Temp->new(UNLINK => 0, 
                                  CLEANUP => 1);
@@ -39,6 +52,19 @@ sub symlink_file :Test(2) {
                       $symlink_filename, $tempfile->filename));
   unlink($symlink_filename);
 
+  return;
+}
+
+sub missing_directory :Test {
+  my $filename = tmpnam;
+  while (-d $filename) {
+    $filename = tmpnam;
+  }
+  my $schema = { testdir => { type => 'directory' }};
+  my $value = { testdir => $filename };
+  eval { validate($value, $schema) };
+  like($@, qr/is not a directory/, "Missing directory fails (expected)");
+  
   return;
 }
 
