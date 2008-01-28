@@ -404,14 +404,16 @@ use warnings;
     if (not -d $value) {
       croak sprintf("%s: '%s' is not a directory", _mkpath($path), $value)
     }
+    return;
   }
   
   sub _validate_file {
     my ($self, $value, $def, $path) = @_;
 
-    if (not -f $value and not -l $value) {
-      croak sprintf("%s: '%s' is not a file", _mkpath($path), $value)
+    if (not -f $value) {      
+      croak sprintf("%s: '%s' is not a file", _mkpath($path), $value);
     }
+    return;
   }
 
   sub _validate_domain {
