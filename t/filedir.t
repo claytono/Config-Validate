@@ -2,50 +2,58 @@
 
 use strict;
 use warnings;
-use Test::More tests => 5;
-use Config::General;
-use Data::Dumper;
+
+Test::Class->runtests;
+
+package Test::FileDir;
+
+use base qw(Test::Class);
+use Test::More;
 use File::Temp qw(tempdir tmpnam);
 
-BEGIN { use_ok('Config::Validate') };
+BEGIN { use_ok('Config::Validate', 'validate') };
 
-my $cv = Config::Validate->new;
-
-{ # normal file test case
-  $cv->schema({ testfile => { type => 'file' }});
+sub normal_file :Test {
   my $tempfile = File::Temp->new(UNLINK => 0, 
                                  CLEANUP => 1);
 
+  my $schema = { testfile => { type => 'file' }};
   my $value = { testfile => $tempfile->filename };
-  eval { $cv->validate($value) };
+  eval { validate($value, $schema) };
   is ($@, '', 'normal file case succeeded (' . $tempfile->filename .  ')');
+  
+  return;
 }
 
-{ # symlink test case
-  $cv->schema({ testfile => { type => 'file' }});
+sub symlink_file :Test(2) {
   my $tempfile = File::Temp->new(UNLINK => 0, 
                                  CLEANUP => 1);
   my $symlink_filename = tmpnam();
   my $rc = symlink $tempfile->filename, $symlink_filename;
   ok($rc, "symlink operation succeeded");
 
+  my $schema = { testfile => { type => 'file' }};
   my $value = { testfile => $symlink_filename };
-  eval { $cv->validate($value) };
+  eval { validate($value, $schema) };
   is ($@, '', sprintf('file w/symlink case succeeded (%s -> %s)',
                       $symlink_filename, $tempfile->filename));
   unlink($symlink_filename);
+
+  return;
 }
 
-{ # directory test case
-  $cv->schema({ testdir => { type => 'directory' }});
+sub normal_directory :Test {
   
   my $tempdir = tempdir("config-validate-dirtest-XXXXX",
                         CLEANUP => 1,
                         TMPDIR => 1,
                        );
 
+  my $schema = { testdir => { type => 'directory' }};
   my $value = { testdir => $tempdir };
-  eval { $cv->validate($value) };
+  eval { validate($value, $schema) };
   is ($@, '', 'directory case succeeded (' . $tempdir .  ')');
+
+  return;
 }
 
