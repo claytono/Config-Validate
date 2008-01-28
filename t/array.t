@@ -37,8 +37,7 @@ sub scalar_with_coerce :Test(5) {
                };
   my $cv = Config::Validate->new(schema => $schema);
 
-  my $data = { arraytest => "blah"
-             };
+  my $data = { arraytest => "blah" };
   my $result;
   eval { $result = $cv->validate($data) };
   is($@, '', 'validated without error');
@@ -91,8 +90,7 @@ sub child_with_default :Test(5) {
 
   my $result;
   my $testarray = [ qw(abc 123 foo bar) ];
-  my $data = { arraytest => $testarray,
-             };
+  my $data = { arraytest => $testarray };
   eval { $result = $cv->validate($data) };
   is($@, '', 'array test w/default');
   
