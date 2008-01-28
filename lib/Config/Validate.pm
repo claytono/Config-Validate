@@ -18,7 +18,7 @@ use warnings;
   our @EXPORT_OK = qw(validate);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
-  our $VERSION = '0.01';
+  our $VERSION = '0.0.1';
 
   my @schema :Field :Accessor(schema) :Arg(schema);
   my @array_allows_scalar :Field 
@@ -317,7 +317,7 @@ use warnings;
     }
 
     if (ref $value ne 'ARRAY') {
-      croak sprintf("%s: should be a 'ARRAY', but instead is '%s'", 
+      croak sprintf("%s: should be an 'ARRAY', but instead is a '%s'", 
                   _mkpath($path), ref $value);
     }
 
@@ -441,7 +441,7 @@ use warnings;
 
     croak sprintf("%s: '%s' is not a valid hostname.", _mkpath($path), $value);
   }
-  
+
 }
 1;
 
