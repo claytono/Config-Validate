@@ -2,45 +2,61 @@
 
 use strict;
 use warnings;
-use Test::More tests => 9;
+
+Test::Class->runtests;
+
+package Test::Hash;
+
+use base qw(Test::Class);
+use Test::More;
 use Config::General;
 use Data::Dumper;
 use Storable qw(dclone);
 
 BEGIN { use_ok('Config::Validate') };
 
-my $cv = Config::Validate->new;
+sub setup :Test(setup => 1) {
+  my ($self) = @_;
 
-my $schema = {hashtest => { type => 'hash',
-                            keytype => 'string',
-                            child => { 
-                              test => { type => 'string',
-                                        default => 'blah'
-                                       },
-                              test2 => { type => 'boolean'},
-                            },
-                          }
-             };
-$cv->schema($schema);
+  $self->{cv} = Config::Validate->new;
+  isa_ok($self->{cv}, 'Config::Validate', "Created object in fixture");
 
-{ # Test child with default
-  my $result;
+  $self->{schema} = {hashtest => { type => 'hash',
+                                   keytype => 'string',
+                                   child => { 
+                                     test => { type => 'string',
+                                               default => 'blah'
+                                              },
+                                     test2 => { type => 'boolean'},
+                                   },
+                                 }
+                    };
+  return;
+}
+
+sub child_with_default :Test(3) {
+  my ($self) = @_;
+  $self->{cv}->schema($self->{schema});
   my $data = { hashtest => 
                { test1 => { test2 => 1 },
                  test2 => { test => 'foo',
                             test2 => 0 },
                },
              };
-  eval { $result = $cv->validate($data) };
+  my $result;
+  eval { $result = $self->{cv}->validate($data) };
   is($@, '', 'hash test w/default');
   is($result->{hashtest}{test1}{test}, 'blah', "default successful");
   is($result->{hashtest}{test2}{test}, 'foo', "explicitly setting default successful");
+
+  return;
 }
 
-{ # Test w/o child validation
-  my $newschema = dclone($schema);
-  delete $newschema->{hashtest}{child};
-  $cv->schema($newschema);
+sub hash_without_child :Test(3) {
+  my ($self) = @_;
+  my $schema = dclone($self->{schema});
+  delete $schema->{hashtest}{child};
+  $self->{cv}->schema($schema);
 
   my $data = { hashtest => 
                { test1 => 1,
@@ -49,16 +65,18 @@ $cv->schema($schema);
              };
 
   my $result;
-  eval { $result = $cv->validate($data) };
+  eval { $result = $self->{cv}->validate($data) };
   is($@, '', 'hash test w/default');
   is($result->{hashtest}{test1}, 1, 'key1 validated');
   is($result->{hashtest}{test2}, 2, 'key2 validated');
+  return;
 }
 
-{ # Test child w/no keytype
-  my $newschema = dclone($schema);
-  delete $newschema->{hashtest}{keytype};
-  $cv->schema($newschema);
+sub child_without_keytype :Test(1) {
+  my ($self) = @_;
+  my $schema = dclone($self->{schema});
+  delete $schema->{hashtest}{keytype};
+  $self->{cv}->schema($schema);
 
   my $data = { hashtest => 
                { test1 => { test2 => 1 },
@@ -68,14 +86,16 @@ $cv->schema($schema);
              };
 
   my $result;
-  eval { $result = $cv->validate($data) };
+  eval { $result = $self->{cv}->validate($data) };
   like($@, qr/No keytype specified/, 'No keytype specified');
+  return;
 }
 
 { # Test child w/bad keytype
-  my $newschema = dclone($schema);
-  $newschema->{hashtest}{keytype} = 'badkeytype';
-  $cv->schema($newschema);
+  my ($self) = @_;
+  my $schema = dclone($self->{schema});
+  $schema->{hashtest}{keytype} = 'badkeytype';
+  $self->{cv}->schema($schema);
 
   my $data = { hashtest => 
                { test1 => { test2 => 1 },
@@ -85,6 +105,7 @@ $cv->schema($schema);
              };
 
   my $result;
-  eval { $result = $cv->validate($data) };
+  eval { $result = $self->{cv}->validate($data) };
   like($@, qr/Invalid keytype 'badkeytype' specified/, 'Bad keytype specified');
+  return;
 }
