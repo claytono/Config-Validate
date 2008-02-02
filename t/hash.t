@@ -85,8 +85,7 @@ sub child_without_keytype :Test(1) {
                },
              };
 
-  my $result;
-  eval { $result = $self->{cv}->validate($data) };
+  eval { $self->{cv}->validate($data) };
   like($@, qr/No keytype specified/, 'No keytype specified');
   return;
 }
@@ -104,8 +103,18 @@ sub child_with_bad_keytype :Test(1) { # Test child w/bad keytype
                },
              };
 
-  my $result;
-  eval { $result = $self->{cv}->validate($data) };
+  eval { $self->{cv}->validate($data) };
   like($@, qr/Invalid keytype 'badkeytype' specified/, 'Bad keytype specified');
   return;
 }
+
+sub child_is_not_a_hash :Test(1) { # Test child w/bad keytype
+  my ($self) = @_;
+
+  $self->{cv}->schema($self->{schema});
+  my $data = { hashtest => 'not a hash ref' };
+  eval { $self->{cv}->validate($data) };
+  like($@, qr/should be a 'HASH', but instead is /, 'non-hashref found');
+  return;
+}
+
