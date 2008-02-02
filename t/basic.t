@@ -2,49 +2,68 @@
 
 use strict;
 use warnings;
-use Test::More tests => 6;
+
+Test::Class->runtests;
+
+package Test::Basic;
+
+use base qw(Test::Class);
+use Test::More;
 use Config::General;
 use Data::Dumper;
 use Storable qw(dclone);
 
-BEGIN { use_ok('Config::Validate') };
+BEGIN { use_ok('Config::Validate', 'validate') };
 
-my $cv = Config::Validate->new;
+sub missing_arguments :Test(2) {
+  eval { validate() };
+  like($@, qr/requires two arguments/, 
+       "Failed with no arguments (expected)");
+  eval { validate({}) };
+  like($@, qr/requires two arguments/, 
+       "Failed with one argument (expected)");
+  return;
+}
 
-{ # No type specified
-
+sub no_type_specified :Test(1) {
+  my $cv = Config::Validate->new;
   $cv->schema({test => {}});
   eval { $cv->validate({blah => 1}) };
   like($@, qr/No type specified for \[\/test\]/, 
        'no type specified: failed (expected)');
+  return;
 }
 
-{ # Invalid type specified
+sub invalid_type_specified :Test(1) {
 
+  my $cv = Config::Validate->new;
   $cv->schema({test => { type => 'blah' }});
   eval { $cv->validate({blah => 1}) };
   like($@, qr/Invalid type 'blah' specified for \[\/test\]/, 
        'no type specified: failed (expected)');
+  return;
 }
 
-{ # Invalid key specified in data/config
-
+sub invalid_key_in_data :Test(1) {
+  my $cv = Config::Validate->new;
   $cv->schema({test => { type => 'boolean' }});
   eval { $cv->validate({test => 1, blah2 => 1, blah3 => 1}) };
   like($@, qr/unknown items were found: blah2, blah3/, 
        'invalid key found (expected)');
+  return;
 }
 
-{ # Required key not found
-
+sub required_key_missing :Test(1) {
+  my $cv = Config::Validate->new;
   $cv->schema({test => { type => 'boolean' }});
   eval { $cv->validate({blah2 => 1, blah3 => 1}) };
   like($@, qr/Required item \[\/test\] was not found/, 
        'invalid key found (expected)');
+  return;
 }
 
-{ # Optional parameter set false
-
+sub mandatory_parameter_not_found :Test(1) {
+  my $cv = Config::Validate->new;
   $cv->schema({test => { type => 'boolean',
                          optional => 0,
                        },
@@ -53,4 +72,5 @@ my $cv = Config::Validate->new;
   eval { $cv->validate({blah2 => 1, blah3 => 1}) };
   like($@, qr/Required item \[\/test\] was not found/, 
        'invalid key found (expected)');
+  return;
 }
