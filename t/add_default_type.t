@@ -30,6 +30,21 @@ sub name_only :Test {
   return;
 }
 
+sub validate_fail_on_type_with_init_hook :Test(2) {
+  my $init_ran = 0;
+  Config::Validate->add_default_type(name => 'init_hook',
+                                     init => sub { $init_ran++ },
+                                    ); 
+
+  my $cv = Config::Validate->new(schema => {test => {type => 'init_hook'}});
+  eval { $cv->validate({test => 1}); };
+  like($@, qr/No callback defined for type 'init_hook'/, 
+       "validate failed as expected");
+  ok($init_ran, "init ran");
+
+  return;
+}
+
 sub init_hook :Test(2) {
   my $init_ran = 0;
   Config::Validate->add_default_type(name => 'init_hook',
