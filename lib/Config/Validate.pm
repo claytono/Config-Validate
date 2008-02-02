@@ -25,6 +25,10 @@ use warnings;
                           :Accessor(array_allows_scalar) 
                           :Arg(Name => 'array_allows_scalar', Default => 1);
   my @debug  :Field :Accessor(debug) :Arg(debug);
+  my @on_debug :Field 
+               :Accessor(on_debug) 
+               :Arg(on_debug) 
+               :Default(\&debug_print);
   my @types  :Field;
 
   my %default_types = (
@@ -136,6 +140,9 @@ use warnings;
     return;
   }  
 
+  # TODO: This should really be using Params::Validate, but when we
+  # update it for that, it should check for the two argument form
+  # explicitly, to maintain backwards compatibility.
   sub validate {
     my ($self, $cfg);
 
@@ -176,7 +183,7 @@ use warnings;
           delete $orig->{$name};
         }
         
-        print "Validating ", _mkpath(@curpath), "\n" if $debug[$$self];
+        $self->_debug("Validating ", _mkpath(@curpath));
         if (lc($def->{type}) eq 'nested') {
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
@@ -288,7 +295,7 @@ use warnings;
 
     while (my ($k, $v) = each %$value) {
       my @curpath = (@$path, $k);
-      print "Validating ", _mkpath(@curpath), "\n" if $debug[$$self];
+      $self->_debug("Validating ", _mkpath(@curpath));
       my $callback = $types[$$self]{$def->{keytype}}{validate};
       $callback->($self, $k, $def, \@curpath);
       if ($def->{child}) {
@@ -322,7 +329,7 @@ use warnings;
     }
 
     foreach my $item (@$value) {
-      print "Validating ", _mkpath($path), "\n" if $debug[$$self];
+      $self->_debug("Validating ", _mkpath($path));
       my $callback = $types[$$self]{$def->{subtype}}{validate};
       $callback->($self, $item, $def, $path);
     }
@@ -442,6 +449,20 @@ use warnings;
     return if $rc;
 
     croak sprintf("%s: '%s' is not a valid hostname.", _mkpath($path), $value);
+  }
+
+  sub _debug {
+    my $self = shift;
+
+    return unless $debug[$$self];
+    return $on_debug[$$self]->($self, @_);    
+  }
+
+  sub debug_print {
+    my $self = shift;
+
+    print join('', @_), "\n";
+    return;
   }
 
 }
