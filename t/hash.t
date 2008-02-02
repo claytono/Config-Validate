@@ -91,7 +91,7 @@ sub child_without_keytype :Test(1) {
   return;
 }
 
-{ # Test child w/bad keytype
+sub child_with_bad_keytype :Test(1) { # Test child w/bad keytype
   my ($self) = @_;
   my $schema = dclone($self->{schema});
   $schema->{hashtest}{keytype} = 'badkeytype';
