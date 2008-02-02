@@ -458,7 +458,7 @@ use warnings;
     return $on_debug[$$self]->($self, @_);    
   }
 
-  sub debug_print {
+  sub _debug_print {
     my $self = shift;
 
     print join('', @_), "\n";
