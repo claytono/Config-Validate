@@ -9,7 +9,6 @@ package Test::Basic;
 
 use base qw(Test::Class);
 use Test::More;
-use Config::General;
 use Data::Dumper;
 use Storable qw(dclone);
 

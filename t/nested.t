@@ -3,7 +3,6 @@
 use strict;
 use warnings;
 use Test::More tests => 4;
-use Config::General;
 use Data::Dumper;
 
 BEGIN { use_ok('Config::Validate') };
