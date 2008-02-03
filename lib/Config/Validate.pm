@@ -476,7 +476,7 @@ Config::Validate - Validate data structures generated from configuration files.
 
 =head1 VERSION
 
-Version 0.02 
+Version 0.1.0
 
 =head1 DESCRIPTION
 
