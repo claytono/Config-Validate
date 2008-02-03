@@ -143,6 +143,8 @@ use warnings;
   # TODO: This should really be using Params::Validate, but when we
   # update it for that, it should check for the two argument form
   # explicitly, to maintain backwards compatibility.
+
+  # TODO: split this into _validate_method and _validate_function
   sub validate {
     my ($self, $cfg);
 
@@ -271,6 +273,7 @@ use warnings;
     return;
   }
 
+  # TODO: Rename this to mkpath and write docs for type developers
   sub _mkpath {
     @_ = @{$_[0]} if ref $_[0] eq 'ARRAY';
     
