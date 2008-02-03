@@ -475,7 +475,8 @@ __END__
 
 =head1 NAME
 
-Config::Validate - Validate data structures generated from configuration files.
+Config::Validate - Validate data structures generated from
+configuration files. (Or anywhere else)
 
 =head1 VERSION
 
@@ -492,9 +493,279 @@ defaults where appropriate.  It also allows you to specify that a
 given configuration key may be available under several aliases, and
 have those renamed to the canonical name automatically.
 
+The basic model used is that the caller provides a schema as a perl
+data structure that describes the constraints to verify against.  The
+caller can then use the C<Config::Validate> object to validate any
+number of data structures against the configured schema.  If the data
+structure conforms to the schema given, then a new data structure will
+be returned, otherwise an exception is thrown.
+
+Probably the easiest way to explain the intent is that
+C<Config::Validate> is trying to be like C<Params::Validate> for
+configuration files and other data structures.
+
+This module has the following features:
+
+=over
+
+=item 
+* Data structure depth is only limited by stack depth
+
+=item
+* Can provide defaults for missing items at any level of the data structure.
+
+=item * Can require that items exist, or items can be optional.
+
+=item * Can validate items in the data structure against a number of built in data types, and users can easily add more data types.
+
+=item * Configuration keys can be known by several names, and will be normalized to the canonical name in the data structure returned by the validation.
+
+=back
+
+=head1 SCHEMA DEFINITION
+
+The most complex part of using C<Config::Validate> is defining the
+schema to validate against.  The schema takes the form of a series of
+one or more levels of nested hashes.
+
+Here is an example schema you might use if you were writing something
+that needs information on an SMTP server to use, and a database server
+to use:
+
+  my $schema = { db => { 
+                    type => 'nested',
+                    alias => 'dbinfo',
+                    child => { 
+                       hostname => { 
+                          type => 'hostname'
+                          alias => [ qw(host server) ],
+                          default => 'localhost,
+                       },
+                       port => { 
+                          type => 'integer',
+                          max => 64*1024 - 1,
+                          min => 1,
+                          default => '3306',
+                       },
+                       username => { 
+                          type => 'string'
+                          optional => 1,
+                          alias => 'user',
+                       },
+                       password => { 
+                          type => 'string',
+                          optional => 1,
+                          alias => [ qw(pass passwd) ],
+                       },
+                       database => {
+                          type => 'string',
+                          alias => 'dbname',
+                       },
+                       column_types => {
+                          type => 'hash',
+                          keytype => 'string',
+                          child => {
+                            id => { 
+                               type => 'string',
+                               default => 'INT',
+                          },
+                       },
+                    },
+                 allowed_users => {
+                    type => 'array',
+                    subtype => 'string',
+                 },
+              };
+
+This is a somewhat long example of what a schema can look like.  This
+uses most of the features available.  The basic format is that a
+schema consists of a hash of hashes.  Each of it's children describe a
+single key in the data to be validated.  The only required key in the
+field definition is C<type>, which defines how that element in the
+data/config hash should be validated.
+
+=head2 VALIDATION TYPES
+
+Below is a list of the built in validation types, and the options they
+take.  There are several global options that any of these can take
+that are documented below.
+
+=head3 nested
+
+The C<nested> type provides a way to validate nested hash references.
+Valid options are:
+
+=over 8
+
+=item * child
+
+Hash reference that defines all the valid keys and values in the
+nested section.  Required.
+
+=backq
+
+=head3 integer
+
+The C<integer> type expects a whole number that can be positive or
+negative.  Valid options are:
+
+=over 8
+
+=item * min
+
+Smallest valid value
+
+=item * max
+
+Largest valid value
+
+=back
+
+=head3 float
+
+The C<float> type verifies that the value meets the
+C<looks_like_number> test from L<Scalar::Util>.  Valid options are:
+
+=over 8
+
+=item * min
+
+Smallest valid value
+
+=item * max
+
+Largest valid value
+
+=back
+
+=head3 string
+
+The C<string> type does no validation if no addition restrictions are
+specified.  Valid options are:
+
+=over 8
+
+=item * min
+
+Minimum length
+
+=item * max
+
+Maximum length
+
+=item * regex
+
+String must match the regex provided.
+
+=head3 boolean
+
+The C<boolean> type looks for a number of specific values, and converts
+them to C<0> or C<1>.  The values considered to be true are: C<1>,
+C<y>, C<yes>, C<t>, C<true> and C<on>.  The values considered to be
+false are C<0>, C<n>, C<no>, C<f>, C<false>, C<off>.  These values are
+not case sensitive.  The C<boolean> type takes no options.
+
+=head3 directory
+
+The C<directory> type verifies that the value is a directory that
+exists.  The C<directory> type takes no options.
+
+=head3 file
+
+The C<file> type verifies that the value is a file, or a symlink that
+points at a file that exists.  The C<file> type takes no options.
+
+=head3 domain
+
+The C<domain> type uses the Data::Validate::Domain C<is_domain>
+function to verify that the value is a validate domain name.  This
+does not look the value up in DNS and verify that it exists.  The
+C<domain> type takes no options.
+
+=head3 hostname
+
+The C<hostname> type uses the Data::Validate::Domain C<is_hostname>
+function to verify that the value is a validate hostname name.  This
+does not look the value up in DNS and verify that it exists.  The
+C<hostname> type takes no options.
+
+=head3 array
+
+The C<array> type verifies that the value is an array reference.  If
+the C<array_allows_scalar> option is turned on (it is by default),
+then if a scalar value is found, then it will automatically be
+converted to an array reference with a single element.
+
+=over 8
+
+=item * subkey
+
+Required option that specifies the type of the elements of the array.
+
+=back
+
+=head3 hash
+
+The C<hash> type validates a hash reference of key/value pairs.  
+
+=over 8
+
+=item * keytype
+
+Required option that specifies the type of validation to do on hash
+keys 
+
+=item * child
+
+If the C<hash> type finds a C<child> option, then it will validate any
+keys in the hash against the fields in the C<child> definition.  Note
+that it is B<NOT> an error if elements are found in the hash that are not
+in child.  If you want that behavior, you should use the C<nested>
+type instead.
+
+=back
+
+=head2 COMMON OPTIONS
+
+There are a set of options that can be added to any field definition,
+that provide a common set of functionality to all.
+
+=over 8
+
+=item * alias
+
+The C<alias> option allows you to specify other names that a
+particular field might be known by.  For example, you may have a field
+named C<password>, but also want to accept C<pass>, C<passwd> and
+C<pw>.  If any of the aliases are found, then they will be renamed in
+the data structure that is returned by C<validate>.  This option can
+point to a scalar, or an array reference.
+
+=item * callback
+
+
+
+=item * default
+
+The C<default> option allows you to specify a default for the field.
+This implicitly means the field is not required to exist in the data
+structure being validated.  As many levels as necessary will be
+created in the resulting data structure to insure the default is created.
+
+=item * optional
+
+If the C<optional> option is true, then the field is not required.  If
+C<optional> is false, or not defined, then the field is required.
+
+=back
+
+=head1 SUBROUTINES/METHODS
+
 =head1 AUTHOR
 
-Clayton O'Neill, E<lt>cpan3.20.coneill@xoxy.netE<gt>
+Clayton O'Neill
+
+Eval for e-mail address: C<join('@', join('.', qw(cv 20 coneill)), 'xoxy.net')>
 
 =head1 LICENSE AND COPYRIGHT
 
