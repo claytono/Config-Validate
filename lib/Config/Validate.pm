@@ -18,7 +18,7 @@ use warnings;
   our @EXPORT_OK = qw(validate);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
-  our $VERSION = '0.0.1';
+  our $VERSION = '0.1.0';
 
   my @schema :Field :Accessor(schema) :Arg(schema);
   my @array_allows_scalar :Field 
