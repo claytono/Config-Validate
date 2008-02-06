@@ -746,6 +746,14 @@ point to a scalar, or an array reference.
 
 =item * callback
 
+The C<callback> option allows you to specify a callback that will be
+called after any other validation has been done for a specific field
+in the data structure.  The callback sub is called with a reference to
+the C<Config::Validate> object (one is created automatically if you're
+using the functional interface), the value to be verified, the
+definition of the field, and an array reference containing the path
+into the data structure.  You can use the C<mkpath> method to convert
+the path to a more readable form for error messages and such.
 
 =item * default
 
@@ -762,6 +770,93 @@ C<optional> is false, or not defined, then the field is required.
 =back
 
 =head1 SUBROUTINES/METHODS
+
+=head2 new
+
+The new method constructs a C<Config::Validate> object, and returns
+it.  It accepts the following arguments:
+
+=over 8
+
+=item * schema
+
+A validation schema as described in the L<SCHEMA DEFINITION> section
+above. 
+
+=item * array_allows_scalar
+
+If this is true, then scalars will be autopromoted to a single element
+array reference when validating C<array> types.
+
+=item * debug
+
+Enables debugging output.
+
+=item * on_debug
+
+Allows you to define a callback for debugging output.  A default
+callback will be provided if this isn't set.  The default callback
+simply prints the debug output to STDOUT.  If you set the callback,
+then will be called with the object as the first parameter, and the
+additional parameters should be joined to form the entire message.
+
+=back
+
+In addition, any of these can read or changed after the object is
+created, via an accessor with the same name as the parameter.
+
+=head2 add_type
+
+The C<add_type> method allows you to register a validation type on
+just a single instance of C<Config::Validate>.  The parameters are as
+follows: 
+
+=over 8
+
+=item * name
+
+This is the name to be specified in the schema to use this validation
+type.  This is a mandatory parameter.
+
+=item * validate
+
+The value of C<validate> should be a callback that will be run when it
+is necessary to validate a field of this type.  The callback will be
+passed the C<Config::Validate> object, the name of the field being
+validated, the schema definition of that field, and an array reference
+containing the path into the data structure.  You can use the
+C<mkpath> method to convert the path to a more readable form for error
+messages and such.
+
+=item * init
+
+The value of C<init> should be a callback that will be run before any
+validation is done.  The callback will be passed the
+C<Config::Validate> object, the schema, and the configuration being
+validated.
+
+=item * finish
+
+The value of C<finish> should be a callback that will be run after any
+validation is done.  The callback will be passed the
+C<Config::Validate> object, the schema, and the configuration being
+validated.
+
+=back
+
+=head2 add_default_type
+
+The C<add_default_type> method allows you to register a validation
+type for all new C<Config::Validate> instances.  It can be called as a
+function, class method, or instance method.  If it is called as an
+instance method, then the new type will also be added to that
+instance.  The parameters are the same as C<add_type>.
+
+=head2 reset_default_types
+
+The C<reset_default_types> method removes all user defined types from
+the base class.  Any instances that are alread created will retain
+their existing type configuration.
 
 =head1 AUTHOR
 
