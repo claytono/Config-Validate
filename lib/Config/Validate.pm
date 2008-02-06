@@ -603,7 +603,7 @@ Valid options are:
 Hash reference that defines all the valid keys and values in the
 nested section.  Required.
 
-=backq
+=back
 
 =head3 integer
 
@@ -657,6 +657,8 @@ Maximum length
 =item * regex
 
 String must match the regex provided.
+
+=back
 
 =head3 boolean
 
@@ -743,7 +745,6 @@ the data structure that is returned by C<validate>.  This option can
 point to a scalar, or an array reference.
 
 =item * callback
-
 
 
 =item * default
