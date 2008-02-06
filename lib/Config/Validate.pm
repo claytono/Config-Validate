@@ -804,6 +804,21 @@ additional parameters should be joined to form the entire message.
 In addition, any of these can read or changed after the object is
 created, via an accessor with the same name as the parameter.
 
+=head2 validate
+
+The validate sub can be called as either a function, or as a instance
+method.  If it is called as an instance method, then it expects a
+single parameter which should be the data structure/config to be
+validated. 
+
+If it is called as a function, then it accepts two parameters.  The
+first parameter should be the data structure/config to be validated,
+and the second should be the schema.
+
+If any errors are encountered, then the validate sub will call die to
+throw an exception.  In that case the value of C<$@> contain an error
+message describing the problem.
+
 =head2 add_type
 
 The C<add_type> method allows you to register a validation type on
