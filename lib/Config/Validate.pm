@@ -57,7 +57,7 @@ use warnings;
   }
 
   sub _parse_add_type_params {
-    # XXX: This should be updated to allow 'byreference'
+    # TODO: This should be updated to allow 'byreference'
     my $spec = { name => { type => SCALAR },
                  validate => { type => CODEREF,
                                optional => 1,
