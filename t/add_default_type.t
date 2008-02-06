@@ -45,31 +45,57 @@ sub validate_fail_on_type_with_init_hook :Test(2) {
   return;
 }
 
-sub init_hook :Test(2) {
+sub init_hook :Test(5) {
   my $init_ran = 0;
+
+  my $schema = { test => { type => 'integer' } };
+  my $cfg = { test => 1 };
+  my $cb = sub { 
+    my ($self_arg, $schema_arg, $cfg_arg) = @_;
+    isa_ok($self_arg, 'Config::Validate', 
+           "param 1 isa Config::Validate");
+    is_deeply($schema, $schema_arg, "param 2 matches"); 
+    is_deeply($cfg, $cfg_arg, "param 3 matches"); 
+    $init_ran++;
+    return;
+  };
+
   Config::Validate->add_default_type(name => 'init_hook',
-                                     init => sub { $init_ran++ },
+                                     init => $cb,
                                     ); 
 
-  my $cv = Config::Validate->new(schema => {test => {type => 'integer'}});
-  eval { $cv->validate({test => 1}); };
+  my $cv = Config::Validate->new(schema => $schema);
+  eval { $cv->validate($cfg); };
   is($@, '', "validate completed without error");
-  ok($init_ran, "init ran");
+  is($init_ran, 1, "init ran once");
 
   return;
 }
 
-sub finish_hook :Test(2) {
+sub finish_hook :Test(5) {
   my $finish_ran = 0;
+
+  my $schema = { test => { type => 'integer' } };
+  my $cfg = { test => 1 };
+  my $cb = sub { 
+    my ($self_arg, $schema_arg, $cfg_arg) = @_;
+    isa_ok($self_arg, 'Config::Validate', 
+           "param 1 isa Config::Validate");
+    is_deeply($schema, $schema_arg, "param 2 matches"); 
+    is_deeply($cfg, $cfg_arg, "param 3 matches"); 
+    $finish_ran++;
+    return;
+  };
+
   Config::Validate->add_default_type(name => 'finish_hook',
-                                     finish => sub { $finish_ran++ },
+                                     finish => $cb,
                                     ); 
 
-  my $cv = Config::Validate->new(schema => {test => {type => 'integer'}});
-  eval { $cv->validate({test => 1}); };
+  my $cv = Config::Validate->new(schema => $schema);
+  eval { $cv->validate($cfg); };
   is($@, '', "validate completed without error");
-  ok($finish_ran, "finish ran");
-
+  is($finish_ran, 1, "finish ran once");
+  
   return;
 }
 

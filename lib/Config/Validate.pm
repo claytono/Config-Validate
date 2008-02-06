@@ -134,7 +134,7 @@ use warnings;
 
     while (my ($name, $value) = each %{ $types[$$self] }) {
       if (defined $value->{$callback}) {
-        $value->{$callback}();
+        $value->{$callback}(@args);
       }
     }
     return;
@@ -158,9 +158,9 @@ use warnings;
       $self = Config::Validate->new(schema => $schema);
     }
     $cfg = clone($cfg);
-    $self->_type_callback('init', $cfg);
+    $self->_type_callback('init', $self, $schema[$$self], $cfg);
     $self->_validate($cfg, $self->schema, []);
-    $self->_type_callback('finish', $cfg);
+    $self->_type_callback('finish', $self, $schema[$$self], $cfg);
     return $cfg;
   }
 
