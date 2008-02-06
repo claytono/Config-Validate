@@ -15,7 +15,7 @@ use warnings;
   use Carp::Clan;
 
   use Exporter qw(import);
-  our @EXPORT_OK = qw(validate);
+  our @EXPORT_OK = qw(validate mkpath);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
   our $VERSION = '0.1.0';
@@ -185,7 +185,7 @@ use warnings;
           delete $orig->{$name};
         }
         
-        $self->_debug("Validating ", _mkpath(@curpath));
+        $self->_debug("Validating ", mkpath(@curpath));
         if (lc($def->{type}) eq 'nested') {
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
@@ -195,7 +195,7 @@ use warnings;
         if (defined $def->{callback}) {
           if (ref $def->{callback} ne 'CODE') {
             croak sprintf("%s: callback specified is not a code reference", 
-                        _mkpath(@curpath));
+                        mkpath(@curpath));
           }
           $def->{callback}($self, $cfg->{$canonical_name}, $def, \@curpath);
         }
@@ -210,14 +210,14 @@ use warnings;
       delete $orig->{$canonical_name};
 
       if (not $found and (not defined $def->{optional} or not $def->{optional})) {
-        croak "Required item " . _mkpath(@curpath) . " was not found";
+        croak "Required item " . mkpath(@curpath) . " was not found";
       }
     }
 
     my @unknown = sort keys %$orig;
     if (@unknown != 0) {
       croak sprintf("%s: the following unknown items were found: %s",
-                  _mkpath($path), join(', ', @unknown));
+                  mkpath($path), join(', ', @unknown));
     }
   }
 
@@ -252,7 +252,7 @@ use warnings;
       } else {
         croak sprintf("Alias defined for %s is type %s, but must be " . 
                       "either an array reference, or scalar",
-                      _mkpath(@curpath), ref $definition->{alias},
+                      mkpath(@curpath), ref $definition->{alias},
                      );
       }
     }
@@ -262,20 +262,19 @@ use warnings;
   sub _check_definition_type {
     my ($self, $definition, @curpath) = @_;
     if (not defined $definition->{type}) {
-      croak "No type specified for " . _mkpath(@curpath);
+      croak "No type specified for " . mkpath(@curpath);
     }
 
     if (not defined $types[$$self]{$definition->{type}}) {
       croak "Invalid type '$definition->{type}' specified for ", 
-        _mkpath(@curpath);
+        mkpath(@curpath);
     }
 
     return;
   }
 
-  # TODO: Rename this to mkpath and write docs for type developers.
   # TODO: Make this callable as a method or function
-  sub _mkpath {
+  sub mkpath {
     @_ = @{$_[0]} if ref $_[0] eq 'ARRAY';
     
     return '[/' . join('/', @_) . ']';
@@ -285,21 +284,21 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
     
     if (not defined $def->{keytype}) {
-      croak "No keytype specified for " . _mkpath(@$path);
+      croak "No keytype specified for " . mkpath(@$path);
     }
     
     if (not defined $types[$$self]{$def->{keytype}}) {
-      croak "Invalid keytype '$def->{keytype}' specified for " . _mkpath(@$path);
+      croak "Invalid keytype '$def->{keytype}' specified for " . mkpath(@$path);
     }
 
     if (ref $value ne 'HASH') {
       croak sprintf("%s: should be a 'HASH', but instead is '%s'", 
-                  _mkpath($path), ref $value);
+                  mkpath($path), ref $value);
     }
 
     while (my ($k, $v) = each %$value) {
       my @curpath = (@$path, $k);
-      $self->_debug("Validating ", _mkpath(@curpath));
+      $self->_debug("Validating ", mkpath(@curpath));
       my $callback = $types[$$self]{$def->{keytype}}{validate};
       $callback->($self, $k, $def, \@curpath);
       if ($def->{child}) {
@@ -313,11 +312,11 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
     
     if (not defined $def->{subtype}) {
-      croak "No subtype specified for " . _mkpath(@$path);
+      croak "No subtype specified for " . mkpath(@$path);
     }
 
     if (not defined $types[$$self]{$def->{subtype}}) {
-      croak "Invalid subtype '$def->{subtype}' specified for " . _mkpath(@$path);
+      croak "Invalid subtype '$def->{subtype}' specified for " . mkpath(@$path);
     }
     
     if (ref $value eq 'SCALAR' and $array_allows_scalar[$$self]) {
@@ -329,11 +328,11 @@ use warnings;
 
     if (ref $value ne 'ARRAY') {
       croak sprintf("%s: should be an 'ARRAY', but instead is a '%s'", 
-                  _mkpath($path), ref $value);
+                  mkpath($path), ref $value);
     }
 
     foreach my $item (@$value) {
-      $self->_debug("Validating ", _mkpath($path));
+      $self->_debug("Validating ", mkpath($path));
       my $callback = $types[$$self]{$def->{subtype}}{validate};
       $callback->($self, $item, $def, $path);
     }
@@ -344,15 +343,15 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
     if ($value !~ /^ -? \d+ $/xo) {
       croak sprintf("%s should be an integer, but has value of '%s' instead",
-                  _mkpath($path), $value);
+                  mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
       croak sprintf("%s: %d is larger than the maximum allowed (%d)", 
-                  _mkpath($path), $value, $def->{max});
+                  mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
       croak sprintf("%s: %d is smaller than the minimum allowed (%d)", 
-                  _mkpath($path), $value, $def->{max});
+                  mkpath($path), $value, $def->{max});
     }
   }
 
@@ -360,15 +359,15 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
     if ($value !~ /^ -? \d*\.?\d+ $/xo) {
       croak sprintf("%s should be an float, but has value of '%s' instead",
-                  _mkpath($path), $value);
+                  mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
       croak sprintf("%s: %f is larger than the maximum allowed (%f)", 
-                  _mkpath($path), $value, $def->{max});
+                  mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
       croak sprintf("%s: %f is smaller than the minimum allowed (%f)", 
-                  _mkpath($path), $value, $def->{max});
+                  mkpath($path), $value, $def->{max});
     }
   }
 
@@ -378,18 +377,18 @@ use warnings;
     if (defined $def->{maxlen}) {
       if (length($value) > $def->{maxlen}) {
         croak sprintf("%s: length of string is %d, but must be less than %d",
-                    _mkpath($path), length($value), $def->{maxlen});
+                    mkpath($path), length($value), $def->{maxlen});
       }
     }
     if (defined $def->{minlen}) {
       if (length($value) < $def->{minlen}) {
         croak sprintf("%s: length of string is %d, but must be greater than %d",
-                    _mkpath($path), length($value), $def->{minlen});
+                    mkpath($path), length($value), $def->{minlen});
       }
     }
     if (defined $def->{regex}) {
       if ($value !~ $def->{regex}) {
-        croak sprintf("%s: regex (%s) didn't match '%s'", _mkpath($path),
+        croak sprintf("%s: regex (%s) didn't match '%s'", mkpath($path),
                     $def->{regex}, $value);
       }
     }
@@ -404,7 +403,7 @@ use warnings;
     $value = 0 if grep { lc($value) eq $_ } @false;
     
     if ($value !~ /^ [01] $/x) {
-      croak sprintf("%s: invalid value '%s', must be: %s", _mkpath($path),
+      croak sprintf("%s: invalid value '%s', must be: %s", mkpath($path),
                   $value, join(', ', (0, 1, @true, @false)));
     }
   }
@@ -413,7 +412,7 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
 
     if (not -d $value) {
-      croak sprintf("%s: '%s' is not a directory", _mkpath($path), $value)
+      croak sprintf("%s: '%s' is not a directory", mkpath($path), $value)
     }
     return;
   }
@@ -422,7 +421,7 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
 
     if (not -f $value) {      
-      croak sprintf("%s: '%s' is not a file", _mkpath($path), $value);
+      croak sprintf("%s: '%s' is not a file", mkpath($path), $value);
     }
     return;
   }
@@ -438,7 +437,7 @@ use warnings;
                       );
     return if $rc;
 
-    croak sprintf("%s: '%s' is not a valid domain name.", _mkpath($path), $value);
+    croak sprintf("%s: '%s' is not a valid domain name.", mkpath($path), $value);
   }
   
   sub _validate_hostname {
@@ -452,7 +451,7 @@ use warnings;
                       );
     return if $rc;
 
-    croak sprintf("%s: '%s' is not a valid hostname.", _mkpath($path), $value);
+    croak sprintf("%s: '%s' is not a valid hostname.", mkpath($path), $value);
   }
 
   sub _debug {
@@ -857,6 +856,16 @@ instance.  The parameters are the same as C<add_type>.
 The C<reset_default_types> method removes all user defined types from
 the base class.  Any instances that are alread created will retain
 their existing type configuration.
+
+=head2 mkpath
+
+This is a convenience function for people writing callbacks and user
+defined type validation.  It takes either an array or array reference
+and returns a string that represents the path to a specific item in
+the configuration.  This might be useful if you're interested in
+having your error messages be consistent with the rest of
+C<Config::Validate>.  This is available for export, but not exported
+by default.  Note: this is a function, not a method.
 
 =head1 AUTHOR
 
