@@ -140,28 +140,60 @@ use warnings;
     return;
   }  
 
-  # TODO: This should really be using Params::Validate, but when we
-  # update it for that, it should check for the two argument form
-  # explicitly, to maintain backwards compatibility.
+  # Unfortunately, the validate function/method used to not use
+  # Params::Validate, and used to instead be callable as a one
+  # argument version as an instance method, or a two argument version
+  # (schema and config) as a function.  This functin is to detect
+  # which way it is being called, and normalize the argument list.
+  sub _parse_validate_args {
+    my (@args) = @_;
 
-  # TODO: split this into _validate_method and _validate_function
-  sub validate {
-    my ($self, $cfg);
-
-    croak "Config::Validate::validate requires two arguments" unless @_ == 2;
-
-    if (blessed $_[0]) {
-      ($self, $cfg) = @_;
-    } else {
-      my $schema;
-      ($cfg, $schema) = @_;
-      $self = Config::Validate->new(schema => $schema);
+    if (@args < 2) {
+      croak "Config::Validate::validate requires at least two arguments";
     }
-    $cfg = clone($cfg);
-    $self->_type_callback('init', $self, $schema[$$self], $cfg);
-    $self->_validate($cfg, $self->schema, []);
-    $self->_type_callback('finish', $self, $schema[$$self], $cfg);
-    return $cfg;
+
+    my $self;
+    if (blessed $args[0]) {
+      # called as a method
+      $self = shift @args;
+      if (@args == 1) {
+        @args = (schema => $schema[$$self], 
+                 config => $args[0]);
+      } else {
+        push(@args, schema => $self->schema);
+      }
+    } else {
+      $self = Config::Validate->new();
+      if (@args == 2) {
+        @args = (config => $args[0],
+                 schema => $args[1]);
+      }
+    }
+
+    my $spec = { schema => { type => HASHREF },
+                 config => { type => HASHREF },
+               };
+    my %args = validate_with(params         => \@args,
+                             spec           => $spec,
+                             stack_skip     => 2,
+                             normalize_keys => sub { 
+                               return lc $_[0];
+                             },
+                            );
+    
+    return ($self, %args);
+  }
+
+  sub validate {
+    my ($self, %args) = _parse_validate_args(@_);
+    my ($config, $schema) = (clone($args{config}), 
+                             clone($args{schema}));
+
+    $self->_type_callback('init', $self, $schema, $config);
+    $self->_validate($config, $schema, []);
+    $self->_type_callback('finish', $self, $schema, $config);
+
+    return $config;
   }
 
   sub _validate {

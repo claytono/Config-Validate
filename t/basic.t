@@ -16,10 +16,10 @@ BEGIN { use_ok('Config::Validate', 'validate') };
 
 sub missing_arguments :Test(2) {
   eval { validate() };
-  like($@, qr/requires two arguments/, 
+  like($@, qr/requires at least two arguments/, 
        "Failed with no arguments (expected)");
   eval { validate({}) };
-  like($@, qr/requires two arguments/, 
+  like($@, qr/requires at least two arguments/, 
        "Failed with one argument (expected)");
   return;
 }
@@ -71,5 +71,24 @@ sub mandatory_parameter_not_found :Test(1) {
   eval { $cv->validate({blah2 => 1, blah3 => 1}) };
   like($@, qr/Required item \[\/test\] was not found/, 
        'invalid key found (expected)');
+  return;
+}
+
+sub method_works_with_named_params :Test(1) {
+  my $cv = Config::Validate->new;
+  $cv->schema({test => { type => 'boolean' } });
+
+  eval { $cv->validate(config => { test => 1}) };
+  is($@, '', 'boolean validated correctly.');
+  return;
+}
+
+sub function_works_with_named_params :Test(1) {
+  eval { 
+    validate(config => { test => 1},
+             schema => {test => { type => 'boolean' } },
+            );
+  };
+  is($@, '', 'boolean validated correctly.');
   return;
 }
