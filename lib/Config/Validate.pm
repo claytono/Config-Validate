@@ -273,7 +273,8 @@ use warnings;
     return;
   }
 
-  # TODO: Rename this to mkpath and write docs for type developers
+  # TODO: Rename this to mkpath and write docs for type developers.
+  # TODO: Make this callable as a method or function
   sub _mkpath {
     @_ = @{$_[0]} if ref $_[0] eq 'ARRAY';
     
