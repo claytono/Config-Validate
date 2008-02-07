@@ -9,3 +9,4 @@
 .*\.tmp$
 .*\.old$
 ^Config-Validate-.*
+Makefile.MI
