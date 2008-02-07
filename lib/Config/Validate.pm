@@ -21,16 +21,30 @@ use warnings;
   
   our $VERSION = '0.1.0';
 
-  my @schema :Field :Accessor(schema) :Arg(schema);
+  my @schema              :Field 
+                          :Accessor(schema) 
+                          :Arg(schema);
   my @array_allows_scalar :Field 
                           :Accessor(array_allows_scalar) 
-                          :Arg(Name => 'array_allows_scalar', Default => 1);
-  my @debug  :Field :Accessor(debug) :Arg(debug);
-  my @on_debug :Field 
-               :Accessor(on_debug) 
-               :Arg(on_debug) 
-               :Default(\&debug_print);
-  my @types  :Field;
+                          :Arg(array_allows_scalar)
+                          :Default(1);
+  my @debug               :Field 
+                          :Accessor(debug) 
+                          :Arg(debug);
+  my @on_debug            :Field 
+                          :Accessor(on_debug) 
+                          :Arg(on_debug) 
+                          :Default(\&debug_print);
+  my @data_path           :Field 
+                          :Accessor(data_path) 
+                          :Arg(data_path)
+                          :Default(0);
+  my @data_path_options   :Field 
+                          :Accessor(data_path_options)
+                          :Arg(data_path_options)
+                          :Default( {} );
+
+  my @types               :Field;
 
   my %default_types = (
     integer   => { validate => \&_validate_integer },
@@ -50,10 +64,22 @@ use warnings;
 
   my %types = %default_types;
 
+  my $have_data_path;
+
   sub _init :Init {
     my ($self, $args) = @_;
     
     $types[$$self] = clone(\%types);
+
+    unless (defined $have_data_path) {
+      eval { require Data::Path; };
+      $have_data_path = $@ eq '' ? 1 : 0;
+    }
+
+    if ($self->data_path and not $have_data_path) {
+      croak "Data::Path requested, but cannot find module";
+    }
+
     return;
   }
 
@@ -194,6 +220,9 @@ use warnings;
     $self->_validate($config, $schema, []);
     $self->_type_callback('finish', $self, $schema, $config);
 
+    if ($self->data_path) {
+      return Data::Path->new($config, $self->data_path_options);
+    }
     return $config;
   }
 
@@ -432,7 +461,7 @@ use warnings;
     
     my @true  = qw(y yes t true on);
     my @false = qw(n no f false off);
-    $value =~ s/\s+//g;
+    $value =~ s/\s+//xg;
     $value = 1 if any { lc($value) eq $_ } @true;
     $value = 0 if any { lc($value) eq $_ } @false;
     
@@ -814,6 +843,18 @@ it.  It accepts the following arguments:
 
 A validation schema as described in the L<SCHEMA DEFINITION> section
 above. 
+
+=item * data_path
+
+If this is set to true, and the C<Data::Path> module is available,
+then the C<validate> method/function will encapsulate the results
+returned in a C<Data::Path> instance.  Defaults to false;
+
+=item * data_path_options
+
+If the C<data_path> option is true, then this should be a hash
+reference to be passed in as the second argument to the C<Data:Path>
+constructor.
 
 =item * array_allows_scalar
 
