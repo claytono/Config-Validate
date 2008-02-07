@@ -46,6 +46,10 @@ use warnings;
 
   my @types               :Field;
 
+  ## no critic(ProhibitSubroutinePrototypes)
+  sub _throw (@);
+  ## use critic
+
   my %default_types = (
     integer   => { validate => \&_validate_integer },
     float     => { validate => \&_validate_float },
@@ -59,7 +63,7 @@ use warnings;
     file      => { validate => \&_validate_file },
     domain    => { validate => \&_validate_domain },
     hostname  => { validate => \&_validate_hostname },
-    nested    => { validate => sub { croak "'nested' is not valid here"; }},
+    nested    => { validate => sub { _throw "'nested' is not valid here"; }},
   );
 
   my %types = %default_types;
@@ -77,7 +81,7 @@ use warnings;
     }
 
     if ($self->data_path and not $have_data_path) {
-      croak "Data::Path requested, but cannot find module";
+      _throw "Data::Path requested, but cannot find module";
     }
 
     return;
@@ -120,13 +124,13 @@ use warnings;
     }
 
     if (defined $types{$p{name}}) {
-      croak "Attempted to add type '$p{name}' that already exists";
+      _throw "Attempted to add type '$p{name}' that already exists";
     }
 
     my $type = clone(\%p);
     delete $type->{name};
     if (keys %$type == 0) {
-      croak "No callbacks defined for type '$p{name}'";
+      _throw "No callbacks defined for type '$p{name}'";
     }
     $types{$p{name}} = $type;
     
@@ -139,13 +143,13 @@ use warnings;
     my %p = _parse_add_type_params(@_);
     
     if (defined $types[$$self]{$p{name}}) {
-      croak "Attempted to add type '$p{name}' that already exists";
+      _throw "Attempted to add type '$p{name}' that already exists";
     }
     
     my $type = clone(\%p);
     delete $type->{name};
     if (keys %$type == 0) {
-      croak "No callbacks defined for type '$p{name}'";
+      _throw "No callbacks defined for type '$p{name}'";
     }
     $types[$$self]{$p{name}} = $type;
     return;
@@ -176,7 +180,7 @@ use warnings;
     my (@args) = @_;
 
     if (@args < 2) {
-      croak "Config::Validate::validate requires at least two arguments";
+      _throw "Config::Validate::validate requires at least two arguments";
     }
 
     my $self;
@@ -256,7 +260,7 @@ use warnings;
         
         if (defined $def->{callback}) {
           if (ref $def->{callback} ne 'CODE') {
-            croak sprintf("%s: callback specified is not a code reference", 
+            _throw sprintf("%s: callback specified is not a code reference", 
                         mkpath(@curpath));
           }
           $def->{callback}($self, $cfg->{$canonical_name}, $def, \@curpath);
@@ -272,15 +276,17 @@ use warnings;
       delete $orig->{$canonical_name};
 
       if (not $found and (not defined $def->{optional} or not $def->{optional})) {
-        croak "Required item " . mkpath(@curpath) . " was not found";
+        _throw "Required item " . mkpath(@curpath) . " was not found";
       }
     }
 
     my @unknown = sort keys %$orig;
     if (@unknown != 0) {
-      croak sprintf("%s: the following unknown items were found: %s",
+      _throw sprintf("%s: the following unknown items were found: %s",
                   mkpath($path), join(', ', @unknown));
     }
+
+    return;
   }
 
   sub _invoke_validate_callback {
@@ -290,7 +296,7 @@ use warnings;
     my $callback = $typeinfo->{validate};
 
     if (not defined $callback) {
-      croak("No callback defined for type '$def->{type}'");
+      _throw("No callback defined for type '$def->{type}'");
     }
       
     if ($typeinfo->{byreference}) {
@@ -312,7 +318,7 @@ use warnings;
       } elsif (ref $definition->{alias} eq '') {
         push(@names, $definition->{alias});
       } else {
-        croak sprintf("Alias defined for %s is type %s, but must be " . 
+        _throw sprintf("Alias defined for %s is type %s, but must be " . 
                       "either an array reference, or scalar",
                       mkpath(@curpath), ref $definition->{alias},
                      );
@@ -324,11 +330,11 @@ use warnings;
   sub _check_definition_type {
     my ($self, $definition, @curpath) = @_;
     if (not defined $definition->{type}) {
-      croak "No type specified for " . mkpath(@curpath);
+      _throw "No type specified for " . mkpath(@curpath);
     }
 
     if (not defined $types[$$self]{$definition->{type}}) {
-      croak "Invalid type '$definition->{type}' specified for ", 
+      _throw "Invalid type '$definition->{type}' specified for ", 
         mkpath(@curpath);
     }
 
@@ -346,15 +352,15 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
     
     if (not defined $def->{keytype}) {
-      croak "No keytype specified for " . mkpath(@$path);
+      _throw "No keytype specified for " . mkpath(@$path);
     }
     
     if (not defined $types[$$self]{$def->{keytype}}) {
-      croak "Invalid keytype '$def->{keytype}' specified for " . mkpath(@$path);
+      _throw "Invalid keytype '$def->{keytype}' specified for " . mkpath(@$path);
     }
 
     if (ref $value ne 'HASH') {
-      croak sprintf("%s: should be a 'HASH', but instead is '%s'", 
+      _throw sprintf("%s: should be a 'HASH', but instead is '%s'", 
                   mkpath($path), ref $value);
     }
 
@@ -374,11 +380,11 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
     
     if (not defined $def->{subtype}) {
-      croak "No subtype specified for " . mkpath(@$path);
+      _throw "No subtype specified for " . mkpath(@$path);
     }
 
     if (not defined $types[$$self]{$def->{subtype}}) {
-      croak "Invalid subtype '$def->{subtype}' specified for " . mkpath(@$path);
+      _throw "Invalid subtype '$def->{subtype}' specified for " . mkpath(@$path);
     }
     
     if (ref $value eq 'SCALAR' and $array_allows_scalar[$$self]) {
@@ -389,7 +395,7 @@ use warnings;
     }
 
     if (ref $value ne 'ARRAY') {
-      croak sprintf("%s: should be an 'ARRAY', but instead is a '%s'", 
+      _throw sprintf("%s: should be an 'ARRAY', but instead is a '%s'", 
                   mkpath($path), ref $value);
     }
 
@@ -404,33 +410,37 @@ use warnings;
   sub _validate_integer {
     my ($self, $value, $def, $path) = @_;
     if ($value !~ /^ -? \d+ $/xo) {
-      croak sprintf("%s should be an integer, but has value of '%s' instead",
+      _throw sprintf("%s should be an integer, but has value of '%s' instead",
                   mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
-      croak sprintf("%s: %d is larger than the maximum allowed (%d)", 
+      _throw sprintf("%s: %d is larger than the maximum allowed (%d)", 
                   mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
-      croak sprintf("%s: %d is smaller than the minimum allowed (%d)", 
+      _throw sprintf("%s: %d is smaller than the minimum allowed (%d)", 
                   mkpath($path), $value, $def->{max});
     }
+
+    return;
   }
 
   sub _validate_float {
     my ($self, $value, $def, $path) = @_;
     if ($value !~ /^ -? \d*\.?\d+ $/xo) {
-      croak sprintf("%s should be an float, but has value of '%s' instead",
+      _throw sprintf("%s should be an float, but has value of '%s' instead",
                   mkpath($path), $value);
     }
     if (defined $def->{max} and $value > $def->{max}) {
-      croak sprintf("%s: %f is larger than the maximum allowed (%f)", 
+      _throw sprintf("%s: %f is larger than the maximum allowed (%f)", 
                   mkpath($path), $value, $def->{max});
     }
     if (defined $def->{min} and $value < $def->{min}) {
-      croak sprintf("%s: %f is smaller than the minimum allowed (%f)", 
+      _throw sprintf("%s: %f is smaller than the minimum allowed (%f)", 
                   mkpath($path), $value, $def->{max});
     }
+    
+    return;
   }
 
   sub _validate_string {
@@ -438,22 +448,24 @@ use warnings;
     
     if (defined $def->{maxlen}) {
       if (length($value) > $def->{maxlen}) {
-        croak sprintf("%s: length of string is %d, but must be less than %d",
+        _throw sprintf("%s: length of string is %d, but must be less than %d",
                     mkpath($path), length($value), $def->{maxlen});
       }
     }
     if (defined $def->{minlen}) {
       if (length($value) < $def->{minlen}) {
-        croak sprintf("%s: length of string is %d, but must be greater than %d",
+        _throw sprintf("%s: length of string is %d, but must be greater than %d",
                     mkpath($path), length($value), $def->{minlen});
       }
     }
     if (defined $def->{regex}) {
       if ($value !~ $def->{regex}) {
-        croak sprintf("%s: regex (%s) didn't match '%s'", mkpath($path),
+        _throw sprintf("%s: regex (%s) didn't match '%s'", mkpath($path),
                     $def->{regex}, $value);
       }
     }
+
+    return;
   }
 
   sub _validate_boolean {
@@ -466,16 +478,18 @@ use warnings;
     $value = 0 if any { lc($value) eq $_ } @false;
     
     if ($value !~ /^ [01] $/x) {
-      croak sprintf("%s: invalid value '%s', must be: %s", mkpath($path),
+      _throw sprintf("%s: invalid value '%s', must be: %s", mkpath($path),
                   $value, join(', ', (0, 1, @true, @false)));
     }
+
+    return;
   }
   
   sub _validate_directory {
     my ($self, $value, $def, $path) = @_;
 
     if (not -d $value) {
-      croak sprintf("%s: '%s' is not a directory", mkpath($path), $value)
+      _throw sprintf("%s: '%s' is not a directory", mkpath($path), $value)
     }
     return;
   }
@@ -484,7 +498,7 @@ use warnings;
     my ($self, $value, $def, $path) = @_;
 
     if (not -f $value) {      
-      croak sprintf("%s: '%s' is not a file", mkpath($path), $value);
+      _throw sprintf("%s: '%s' is not a file", mkpath($path), $value);
     }
     return;
   }
@@ -498,9 +512,11 @@ use warnings;
                                  domain_private_tld => qr/.*/x,
                                 }
                       );
-    return if $rc;
-
-    croak sprintf("%s: '%s' is not a valid domain name.", mkpath($path), $value);
+    if (not $rc) {
+      _throw sprintf("%s: '%s' is not a valid domain name.", 
+                     mkpath($path), $value);
+    }
+    return;
   }
   
   sub _validate_hostname {
@@ -512,9 +528,12 @@ use warnings;
                                    domain_private_tld => qr/\. acmedns $/xi,
                                   }
                       );
-    return if $rc;
+    if (not $rc) {
+      _throw sprintf("%s: '%s' is not a valid hostname.", 
+                     mkpath($path), $value);
+    }
 
-    croak sprintf("%s: '%s' is not a valid hostname.", mkpath($path), $value);
+    return;
   }
 
   sub _debug {
@@ -530,6 +549,14 @@ use warnings;
     print join('', @_), "\n";
     return;
   }
+
+  ## no critic
+  sub _throw (@) {
+    # Turn off O::IO exception handler
+    local $SIG{__DIE__};
+    croak @_;
+  }
+  ## use critic
 
 }
 1;
