@@ -13,6 +13,7 @@ use warnings;
   use Scalar::Util qw(blessed);
   use Params::Validate qw(validate_with :types);
   use Carp::Clan;
+  use List::MoreUtils qw(any);
 
   use Exporter qw(import);
   our @EXPORT_OK = qw(validate mkpath);
@@ -431,8 +432,8 @@ use warnings;
     
     my @true  = qw(y yes t true on);
     my @false = qw(n no f false off);
-    $value = 1 if grep { lc($value) eq $_ } @true;
-    $value = 0 if grep { lc($value) eq $_ } @false;
+    $value = 1 if any { lc($value) eq $_ } @true;
+    $value = 0 if any { lc($value) eq $_ } @false;
     
     if ($value !~ /^ [01] $/x) {
       croak sprintf("%s: invalid value '%s', must be: %s", mkpath($path),

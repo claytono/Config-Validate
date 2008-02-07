@@ -18,6 +18,7 @@ WriteMakefile(
       'Data::Validate::Domain' => 0,
       'Test::Class'            => 0,
       'Carp::Clan'             => 0,
+      'List::MoreUtils'        => 0,
     }, 
     ABSTRACT_FROM  => 'lib/Config/Validate.pm', 
     AUTHOR         => "Clayton O'Neill",
