@@ -517,14 +517,14 @@ Version 0.1.0
 
 =head1 DESCRIPTION
 
-This module is intended to be used to validate configuration data that
-has been read in already and is in a Perl data structure.  It does not
-handle reading or parsing configuration files since there are a
-plethora of available modules on CPAN to do that task.  Instead if
-concentrates on verifying that the data read is correct, and providing
-defaults where appropriate.  It also allows you to specify that a
-given configuration key may be available under several aliases, and
-have those renamed to the canonical name automatically.
+This module is for validating configuration data that has been read in
+already and is in a Perl data structure.  It does not handle reading
+or parsing configuration files since there are a plethora of available
+modules on CPAN to do that task.  Instead it concentrates on verifying
+that the data read is correct, and providing defaults where
+appropriate.  It also allows you to specify that a given configuration
+key may be available under several aliases, and have those renamed to
+the canonical name automatically.
 
 The basic model used is that the caller provides a schema as a perl
 data structure that describes the constraints to verify against.  The
@@ -558,12 +558,11 @@ This module has the following features:
 =head1 SCHEMA DEFINITION
 
 The most complex part of using C<Config::Validate> is defining the
-schema to validate against.  The schema takes the form of a series of
-one or more levels of nested hashes.
+schema to validate against.  The schema takes the form of set of
+nested hashes.
 
 Here is an example schema you might use if you were writing something
-that needs information on an SMTP server to use, and a database server
-to use:
+that needs to validate a database connection configuration file.
 
   my $schema = { db => { 
                     type => 'nested',
@@ -613,9 +612,9 @@ to use:
 This is a somewhat long example of what a schema can look like.  This
 uses most of the features available.  The basic format is that a
 schema consists of a hash of hashes.  Each of it's children describe a
-single key in the data to be validated.  The only required key in the
-field definition is C<type>, which defines how that element in the
-data/config hash should be validated.
+single field in the data structure to be validated.  The only required
+key in the field definition is C<type>, which defines how that element
+in the data/config hash should be validated.
 
 =head2 VALIDATION TYPES
 
