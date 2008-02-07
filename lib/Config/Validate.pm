@@ -21,7 +21,7 @@ use 5.008;
   our @EXPORT_OK = qw(validate mkpath);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
-  our $VERSION = '0.1.0';
+  our $VERSION = '0.2.0';
 
   my @schema              :Field 
                           :Accessor(schema) 
@@ -579,7 +579,7 @@ configuration files. (Or anywhere else)
 
 =head1 VERSION
 
-Version 0.1.0
+Version 0.2.0
 
 =head1 DESCRIPTION
 

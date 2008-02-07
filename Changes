@@ -1,0 +1,13 @@
+0.2.0 - 20080207 - Clayton O'Neill
+
+ * Added Data::Path integration
+
+ * Added Config::General integration
+
+ * Fixed problem with bad interactions with OIO __DIE__ handler.
+
+ * Fixed a bug where boolean validation was considering whitespace to
+   be significant
+
+0.1.0 - 20080206 - Clayton O'Neill
+ * Initial release.
