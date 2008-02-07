@@ -220,6 +220,13 @@ use warnings;
     my ($config, $schema) = (clone($args{config}), 
                              clone($args{schema}));
 
+    # Not sure if Config::General object will be extended or not, so
+    # assume anything in Config::General namespace as a getall method.
+    my $config_type = ref $config;
+    if ($config_type =~ /^Config::General/ix) {
+      $config = { $config->getall() };
+    }
+
     $self->_type_callback('init', $self, $schema, $config);
     $self->_validate($config, $schema, []);
     $self->_type_callback('finish', $self, $schema, $config);
@@ -921,6 +928,11 @@ C<config> parameter should be the data structure/config to be validated,
 and the C<schema> parameter should be the schema.
 
   my $result = validate(config => $config, schema => $schema)
+
+The C<config> parameter above can be a hash reference, or it can be a
+C<Config::General> object.  If it is a C<Config::General> object, then
+the validate sub will automatically call the C<getall> method on the
+object.
 
 If any errors are encountered, then the validate sub will call die to
 throw an exception.  In that case the value of C<$@> contain an error
