@@ -1,4 +1,4 @@
-use 5.008005;
+use 5.008000;
 use ExtUtils::MakeMaker;
 use Cwd;
 
@@ -11,20 +11,16 @@ my $do_coverage = ($@ eq '');
 WriteMakefile(
     NAME              => 'Config::Validate',
     VERSION_FROM      => 'lib/Config/Validate.pm', # finds $VERSION
-    PREREQ_PM         => { 'Config::General' => 0,
-			   'Object::InsideOut' => 0,
-			   'Scalar::Util::Clone' => 0,
-			   'Params::Validate' => 0,
-			   'Data::Validate::Domain' => 0 # Should be optional
-			   
-    }, # e.g., Module::Name => 1.1
-    dist => {
-      COMPRESS => 'bzip2 --best -f',
-      SUFFIX => '.bz2'
-     },
-    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/Config/Validate.pm', # retrieve abstract from module
-       AUTHOR         => "Clayton O'Neill <coneill\@eng.rr.com>") : ()),
+    PREREQ_PM         => { 
+      'Object::InsideOut'      => 0,
+      'Scalar::Util::Clone'    => 0,
+      'Params::Validate'       => 0,
+      'Data::Validate::Domain' => 0,
+      'Test::Class'            => 0,
+      'Carp::Clan'             => 0,
+    }, 
+    ABSTRACT_FROM  => 'lib/Config/Validate.pm', 
+    AUTHOR         => "Clayton O'Neill",
 );
 
 sub MY::postamble {
