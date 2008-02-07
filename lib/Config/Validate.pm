@@ -1,6 +1,8 @@
 package Config::Validate;
+
 use strict;
 use warnings;
+use 5.008;
 
 # There is too much DWIMery here for this to be practical
 ## no critic (RequireArgUnpacking, ProhibitDoubleSigils)
