@@ -2,6 +2,10 @@
 
 use strict;
 use warnings;
+use Test::More;
+
+eval 'use IO::Scalar';
+plan(skip_all => 'IO::Scalar required for test') if $@;
 
 Test::Class->runtests;
 
@@ -10,7 +14,6 @@ package Test::DebugPrint;
 use base qw(Test::Class);
 use Test::More;
 use Config::Validate;
-use IO::Scalar;
 
 sub debug_print :Test {
   my $buffer;
