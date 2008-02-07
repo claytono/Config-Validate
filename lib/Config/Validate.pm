@@ -432,6 +432,7 @@ use warnings;
     
     my @true  = qw(y yes t true on);
     my @false = qw(n no f false off);
+    $value =~ s/\s+//g;
     $value = 1 if any { lc($value) eq $_ } @true;
     $value = 0 if any { lc($value) eq $_ } @false;
     

@@ -2,12 +2,13 @@
 
 use strict;
 use warnings;
-use Test::More tests => 32;
+use Test::More tests => 36;
 use Data::Dumper;
 
 BEGIN { use_ok('Config::Validate', 'validate') };
 
 my @valid = qw(0 1 t f true false on off y n yes no);
+push(@valid, "yes ", " yes");
 push(@valid, map { uc($_) } @valid);
 test_success($_) foreach @valid;
 
