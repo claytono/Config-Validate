@@ -839,17 +839,26 @@ created, via an accessor with the same name as the parameter.
 =head2 validate
 
 The validate sub can be called as either a function, or as a instance
-method.  If it is called as an instance method, then it expects a
-single parameter which should be the data structure/config to be
-validated. 
+method.  
+
+If it is called as an instance method, then it expects a single
+C<config> parameter which should be the data structure/config to be
+validated.
+
+  my $result = $obj->validate(config => $config)
 
 If it is called as a function, then it accepts two parameters.  The
-first parameter should be the data structure/config to be validated,
-and the second should be the schema.
+C<config> parameter should be the data structure/config to be validated,
+and the C<schema> parameter should be the schema.
+
+  my $result = validate(config => $config, schema => $schema)
 
 If any errors are encountered, then the validate sub will call die to
 throw an exception.  In that case the value of C<$@> contain an error
 message describing the problem.
+
+There was formerly a one and two argument variant of this sub.  It is
+still supported, but deprecated.
 
 =head2 add_type
 
