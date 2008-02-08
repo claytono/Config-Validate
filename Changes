@@ -1,3 +1,10 @@
+0.2.1 - 20080208 - Clayton O'Neill
+
+ * Added README file
+
+ * Converted Makefile.PL to use Module::Install instead of
+   ExtUtils::MakeMaker
+
 0.2.0 - 20080207 - Clayton O'Neill
 
  * Added Data::Path integration
