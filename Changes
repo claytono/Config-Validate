@@ -3,6 +3,8 @@
  * Fixed a problem where the Config::General test required that
    Data::Path be installed to succeed.
 
+ * README was accidently in man page format, not text
+
 0.2.1 - 20080208 - Clayton O'Neill
 
  * Added README file
