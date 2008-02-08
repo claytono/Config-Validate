@@ -16,8 +16,7 @@ use Test::More;
 use Config::Validate;
 
 sub normal :Test(1) {
-  my $cv = Config::Validate->new(schema => {test => { type => 'boolean' } },
-                                 data_path => 1);
+  my $cv = Config::Validate->new(schema => {test => { type => 'boolean' } });
   my $result;
   my $cg = Config::General->new(-String => "test = yes");
   eval { 
