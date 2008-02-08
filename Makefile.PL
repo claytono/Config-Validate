@@ -1,57 +1,19 @@
-use 5.008000;
-use ExtUtils::MakeMaker;
-use Cwd;
+use inc::Module::Install;
 
-eval {
- require ExtUtils::MakeMaker::Coverage;
-};
+name 'Config-Validate';
+all_from 'lib/Config/Validate.pm';
 
-my $do_coverage = ($@ eq '');
+requires 'Object::InsideOut'      => 0;
+requires 'Scalar::Util::Clone'    => 0;
+requires 'Params::Validate'       => 0;
+requires 'Data::Validate::Domain' => 0;
+requires 'Carp::Clan'             => 0;
+requires 'List::MoreUtils'        => 0;
 
-WriteMakefile(
-    NAME              => 'Config::Validate',
-    VERSION_FROM      => 'lib/Config/Validate.pm', # finds $VERSION
-    PREREQ_PM         => { 
-      'Object::InsideOut'      => 0,
-      'Scalar::Util::Clone'    => 0,
-      'Params::Validate'       => 0,
-      'Data::Validate::Domain' => 0,
-      'Test::Class'            => 0,
-      'Carp::Clan'             => 0,
-      'List::MoreUtils'        => 0,
-    }, 
-    ABSTRACT_FROM  => 'lib/Config/Validate.pm', 
-    AUTHOR         => "Clayton O'Neill",
-);
+build_requires 'Test::Class' => 0;
 
-sub MY::postamble {
-  my $cwd = cwd();
-  my %defines = (
-    _sourcedir => $cwd,
-    _srcrpmdir => $cwd,
-    _rpmdir => $cwd,
-    _builddir => "$cwd/BUILD",
-   );
+recommends 'Config::General' => 0;
+recommends 'Data::Path'      => 0;
 
-  my $defines = '';
-  while (my ($key, $value) = each %defines) {
-    $defines .= "--define '$key $value' ";
-  }
 
-  my $fragment = qq{
-
-rpm: \$(DISTVNAME).tar\$(SUFFIX)
-\tmakerpm rpm \$(DISTNAME)-pm.spec \$(VERSION)
-
-srpm: \$(DISTVNAME).tar\$(SUFFIX)
-\tmakerpm srpm \$(DISTNAME)-pm.spec \$(VERSION)
-
-  };
-  if ($do_coverage) {
-    print "Found ExtUtils::MakeMaker::Coverage, including in Makefile\n";
-    return ExtUtils::MakeMaker::Coverage::testcover() . $fragment;
-  } else {
-    print "Could not find ExtUtils::MakeMaker::Coverage, so testcover is disabled.\n";
-    return $fragment;
-  }
-}
+WriteAll;
