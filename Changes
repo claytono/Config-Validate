@@ -1,3 +1,8 @@
+0.2.3 - 20080209 - Clayton O'Neill
+
+ * Fixed up some of the tests so that they will be more likely to
+   succeed out side of my environment.
+
 0.2.2 - 20080208 - Clayton O'Neill
 
  * Fixed a problem where the Config::General test required that
