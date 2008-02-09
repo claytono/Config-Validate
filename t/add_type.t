@@ -10,7 +10,7 @@ package Test::AddType;
 use base qw(Test::Class);
 use Test::More;
 
-BEGIN { use_ok('Config::Validate') };
+use Config::Validate;
 
 sub setup :Test(setup => 1) {
   my ($self) = @_;

@@ -11,7 +11,7 @@ use base qw(Test::Class);
 use Test::More;
 use Data::Dumper;
 
-BEGIN { use_ok('Config::Validate') };
+use Config::Validate;
 
 sub positive :Test {
 my $cv = Config::Validate->new;

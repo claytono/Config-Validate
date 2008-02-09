@@ -10,7 +10,7 @@ package Test::AddDefaultType;
 use base qw(Test::Class);
 use Test::More;
 
-BEGIN { use_ok('Config::Validate') };
+use Config::Validate;
 
 sub teardown :Test(teardown) {
   Config::Validate::reset_default_types();

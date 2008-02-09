@@ -12,7 +12,7 @@ use Test::More;
 use Data::Dumper;
 use Storable qw(dclone);
 
-BEGIN { use_ok('Config::Validate', 'validate') };
+use Config::Validate qw(validate);
 
 sub on_debug :Test(4) {
   my $cv;

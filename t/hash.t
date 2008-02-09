@@ -12,7 +12,7 @@ use Test::More;
 use Data::Dumper;
 use Storable qw(dclone);
 
-BEGIN { use_ok('Config::Validate') };
+use Config::Validate;
 
 sub setup :Test(setup => 1) {
   my ($self) = @_;

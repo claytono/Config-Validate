@@ -12,7 +12,7 @@ use Test::More;
 use Data::Dumper;
 use Storable qw(dclone);
 
-BEGIN { use_ok('Config::Validate', 'validate') };
+use Config::Validate qw(validate);
 
 sub missing_arguments :Test(2) {
   eval { validate() };

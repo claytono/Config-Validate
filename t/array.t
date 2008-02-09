@@ -10,7 +10,7 @@ package Test::Array;
 use base qw(Test::Class);
 use Test::More;
 
-BEGIN { use_ok('Config::Validate', 'validate') };
+use Config::Validate qw(validate);
 
 sub no_subtype :Test {
   my $schema = {arraytest => { type => 'array' }};

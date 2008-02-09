@@ -11,7 +11,7 @@ use base qw(Test::Class);
 use Test::More;
 use File::Temp qw(tempdir tmpnam);
 
-BEGIN { use_ok('Config::Validate', 'validate') };
+use Config::Validate qw(validate);
 
 sub missing_file :Test {
   my $filename = tmpnam;
