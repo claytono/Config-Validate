@@ -3,7 +3,7 @@ NAME
     files. (Or anywhere else)
 
 VERSION
-    Version 0.2.2
+    Version 0.2.4
 
 DESCRIPTION
     This module is for validating configuration data that has been read in

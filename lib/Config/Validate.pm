@@ -2,7 +2,7 @@ package Config::Validate;
 
 use strict;
 use warnings;
-use 5.008;
+use 5.008005;
 
 # There is too much DWIMery here for this to be practical
 ## no critic (RequireArgUnpacking, ProhibitDoubleSigils)
@@ -11,9 +11,9 @@ use 5.008;
   use Object::InsideOut;
 
   use Data::Dumper;
-  use Scalar::Util::Clone qw(clone);
+  use Clone::PP qw(clone);
   use Scalar::Util qw(blessed);
-  use Params::Validate qw(validate_with :types);
+  use Params::Validate qw(:types validate_with);
   use Carp::Clan;
   use List::MoreUtils qw(any);
 
@@ -21,7 +21,7 @@ use 5.008;
   our @EXPORT_OK = qw(validate mkpath);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
-  our $VERSION = '0.2.3';
+  our $VERSION = '0.2.4';
 
   my @schema              :Field 
                           :Accessor(schema) 
@@ -579,7 +579,7 @@ configuration files. (Or anywhere else)
 
 =head1 VERSION
 
-Version 0.2.3
+Version 0.2.4
 
 =head1 DESCRIPTION
 

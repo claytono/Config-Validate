@@ -20,10 +20,11 @@ recommends:
   Data::Path: 0
 requires: 
   Carp::Clan: 0
+  Clone::PP: 0
   Data::Validate::Domain: 0
   List::MoreUtils: 0
   Object::InsideOut: 0
   Params::Validate: 0
-  Scalar::Util::Clone: 0
-  perl: 5.8.0
+  Scalar::Util: 1.1
+  perl: 5.8.5
 version: 0.2.3

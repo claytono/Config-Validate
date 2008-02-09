@@ -1,3 +1,8 @@
+0.2.4 - 20080209 - Clayton O'Neill
+
+ * Changed to use Clone::PP instead of Scalar::Util::Clone, since the latter
+   doesn't build on 5.10 yet.
+
 0.2.3 - 20080209 - Clayton O'Neill
 
  * Fixed up some of the tests so that they will be more likely to
