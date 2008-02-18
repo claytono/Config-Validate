@@ -27,4 +27,4 @@ requires:
   Params::Validate: 0
   Scalar::Util: 1.1
   perl: 5.8.5
-version: 0.2.5
+version: 0.2.6
