@@ -56,13 +56,9 @@ use 5.008005;
     integer   => { validate => \&_validate_integer },
     float     => { validate => \&_validate_float },
     string    => { validate => \&_validate_string },
-    boolean   => { validate => \&_validate_boolean,
-                   byreference => 1,
-                 },
+    boolean   => { validate => \&_validate_boolean },
     hash      => { validate => \&_validate_hash }, 
-    array     => { validate => \&_validate_array,
-                   byreference => 1,
-                 }, 
+    array     => { validate => \&_validate_array }, 
     directory => { validate => \&_validate_directory },
     file      => { validate => \&_validate_file },
     domain    => { validate => \&_validate_domain },
@@ -92,7 +88,6 @@ use 5.008005;
   }
 
   sub _parse_add_type_params {
-    # TODO: This should be updated to allow 'byreference'
     my $spec = { name => { type => SCALAR },
                  validate => { type => CODEREF,
                                optional => 1,
@@ -309,12 +304,8 @@ use 5.008005;
     if (not defined $callback) {
       _throw("No callback defined for type '$def->{type}'");
     }
-      
-    if ($typeinfo->{byreference}) {
-      $callback->($self, \$cfg->{$canonical_name}, $def, $curpath);
-    } else {
-      $callback->($self,  $cfg->{$canonical_name}, $def, $curpath);
-    }
+    
+    $callback->($self, \$cfg->{$canonical_name}, $def, $curpath);
       
     return;
   }
@@ -370,8 +361,10 @@ use 5.008005;
       _throw "Invalid keytype '$def->{keytype}' specified for " . mkpath(@$path);
     }
 
-    if (ref $value ne 'HASH') {
-      _throw sprintf("%s: should be a 'HASH', but instead is '%s'", 
+    if (ref $$value eq 'HASH') {
+      $value = $$value;
+    } else {
+      _throw sprintf("%s: should be a hash, but instead is '%s'", 
                   mkpath($path), ref $value);
     }
 
@@ -379,7 +372,7 @@ use 5.008005;
       my @curpath = (@$path, $k);
       $self->_debug("Validating ", mkpath(@curpath));
       my $callback = $types[$$self]{$def->{keytype}}{validate};
-      $callback->($self, $k, $def, \@curpath);
+      $callback->($self, \$k, $def, \@curpath);
       if ($def->{child}) {
         $self->_validate($v, $def->{child}, \@curpath);
       }
@@ -415,7 +408,7 @@ use 5.008005;
       my @path = ( @$path, "[$index]" );
       $self->_debug("Validating ", mkpath(@path));
       my $callback = $types[$$self]{$def->{subtype}}{validate};
-      $callback->($self, $item, $def, \@path);
+      $callback->($self, \$item, $def, \@path);
       $index++;
     }
     return;
@@ -423,6 +416,9 @@ use 5.008005;
 
   sub _validate_integer {
     my ($self, $value, $def, $path) = @_;
+
+    $value = $$value;
+
     if ($value !~ /^ -? \d+ $/xo) {
       _throw sprintf("%s should be an integer, but has value of '%s' instead",
                   mkpath($path), $value);
@@ -441,6 +437,8 @@ use 5.008005;
 
   sub _validate_float {
     my ($self, $value, $def, $path) = @_;
+
+    $value = $$value;
     if ($value !~ /^ -? \d*\.?\d+ $/xo) {
       _throw sprintf("%s should be an float, but has value of '%s' instead",
                   mkpath($path), $value);
@@ -460,6 +458,7 @@ use 5.008005;
   sub _validate_string {
     my ($self, $value, $def, $path) = @_;
     
+    $value = $$value;
     if (defined $def->{maxlen}) {
       if (length($value) > $def->{maxlen}) {
         _throw sprintf("%s: length of string is %d, but must be less than %d",
@@ -502,8 +501,8 @@ use 5.008005;
   sub _validate_directory {
     my ($self, $value, $def, $path) = @_;
 
-    if (not -d $value) {
-      _throw sprintf("%s: '%s' is not a directory", mkpath($path), $value)
+    if (not -d $$value) {
+      _throw sprintf("%s: '%s' is not a directory", mkpath($path), $$value)
     }
     return;
   }
@@ -511,8 +510,8 @@ use 5.008005;
   sub _validate_file {
     my ($self, $value, $def, $path) = @_;
 
-    if (not -f $value) {      
-      _throw sprintf("%s: '%s' is not a file", mkpath($path), $value);
+    if (not -f $$value) {      
+      _throw sprintf("%s: '%s' is not a file", mkpath($path), $$value);
     }
     return;
   }
@@ -521,14 +520,14 @@ use 5.008005;
     my ($self, $value, $def, $path) = @_;
 
     use Data::Validate::Domain qw(is_domain);
-    
-    my $rc = is_domain($value, { domain_allow_single_label => 1,
+
+    my $rc = is_domain($$value, { domain_allow_single_label => 1,
                                  domain_private_tld => qr/.*/x,
                                 }
                       );
     if (not $rc) {
       _throw sprintf("%s: '%s' is not a valid domain name.", 
-                     mkpath($path), $value);
+                     mkpath($path), $$value);
     }
     return;
   }
@@ -538,13 +537,13 @@ use 5.008005;
 
     use Data::Validate::Domain qw(is_hostname);
     
-    my $rc = is_hostname($value, { domain_allow_single_label => 1,
+    my $rc = is_hostname($$value, { domain_allow_single_label => 1,
                                    domain_private_tld => qr/\. acmedns $/xi,
                                   }
                       );
     if (not $rc) {
       _throw sprintf("%s: '%s' is not a valid hostname.", 
-                     mkpath($path), $value);
+                     mkpath($path), $$value);
     }
 
     return;
@@ -965,11 +964,14 @@ type.  This is a mandatory parameter.
 
 The value of C<validate> should be a callback that will be run when it
 is necessary to validate a field of this type.  The callback will be
-passed the C<Config::Validate> object, the name of the field being
+passed the C<Config::Validate> object, a reference to the field being
 validated, the schema definition of that field, and an array reference
-containing the path into the data structure.  You can use the
-C<mkpath> method to convert the path to a more readable form for error
-messages and such.
+containing the path into the data structure.  The validation callback
+is allowed to modify the value passed in.  This can be used for
+normalizing values, like the C<boolean> validation type does.
+
+You can use the C<mkpath> method to convert the path to a more
+readable form for error messages and such.
 
 =item * init
 

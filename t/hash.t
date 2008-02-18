@@ -113,7 +113,7 @@ sub child_is_not_a_hash :Test(1) { # Test child w/bad keytype
   $self->{cv}->schema($self->{schema});
   my $data = { hashtest => 'not a hash ref' };
   eval { $self->{cv}->validate($data) };
-  like($@, qr/should be a 'HASH', but instead is /, 'non-hashref found');
+  like($@, qr/should be a hash, but instead is /, 'non-hashref found');
   return;
 }
 
