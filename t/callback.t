@@ -15,7 +15,7 @@ BEGIN { use_ok('Config::Validate', 'validate') };
     
     ok(1, "callback ran");
     isa_ok($self, 'Config::Validate');
-    is($value, 'yes', "value argument correct");
+    is($value, 1, "value argument correct");
     is_deeply($def, $define, 'define argument correct');
     is_deeply($path, [ 'booleantest' ], 'path argument correct');
   };
