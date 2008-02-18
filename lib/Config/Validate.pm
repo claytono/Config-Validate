@@ -21,7 +21,7 @@ use 5.008005;
   our @EXPORT_OK = qw(validate mkpath);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
-  our $VERSION = '0.2.4';
+  our $VERSION = '0.2.5';
 
   my @schema              :Field 
                           :Accessor(schema) 
@@ -36,7 +36,7 @@ use 5.008005;
   my @on_debug            :Field 
                           :Accessor(on_debug) 
                           :Arg(on_debug) 
-                          :Default(\&debug_print);
+                          :Default(\&_debug_print);
   my @data_path           :Field 
                           :Accessor(data_path) 
                           :Arg(data_path)
@@ -579,7 +579,7 @@ configuration files. (Or anywhere else)
 
 =head1 VERSION
 
-Version 0.2.4
+Version 0.2.5
 
 =head1 DESCRIPTION
 

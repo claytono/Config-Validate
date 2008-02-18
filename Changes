@@ -1,3 +1,8 @@
+0.2.5 - 20080217 - Clayton O'Neill
+
+ * Fixed a bug where the default for the debug handler was incorrect. 
+   Thanks to Diab Jerius for pointing it out.
+
 0.2.4 - 20080209 - Clayton O'Neill
 
  * Changed to use Clone::PP instead of Scalar::Util::Clone, since the latter
