@@ -56,7 +56,9 @@ use 5.008005;
     integer   => { validate => \&_validate_integer },
     float     => { validate => \&_validate_float },
     string    => { validate => \&_validate_string },
-    boolean   => { validate => \&_validate_boolean },
+    boolean   => { validate => \&_validate_boolean,
+                   byreference => 1,
+                 },
     hash      => { validate => \&_validate_hash }, 
     array     => { validate => \&_validate_array,
                    byreference => 1,
@@ -485,13 +487,13 @@ use 5.008005;
     
     my @true  = qw(y yes t true on);
     my @false = qw(n no f false off);
-    $value =~ s/\s+//xg;
-    $value = 1 if any { lc($value) eq $_ } @true;
-    $value = 0 if any { lc($value) eq $_ } @false;
+    $$value =~ s/\s+//xg;
+    $$value = 1 if any { lc($$value) eq $_ } @true;
+    $$value = 0 if any { lc($$value) eq $_ } @false;
     
-    if ($value !~ /^ [01] $/x) {
+    if ($$value !~ /^ [01] $/x) {
       _throw sprintf("%s: invalid value '%s', must be: %s", mkpath($path),
-                  $value, join(', ', (0, 1, @true, @false)));
+                  $$value, join(', ', (0, 1, @true, @false)));
     }
 
     return;
