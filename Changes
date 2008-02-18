@@ -1,3 +1,9 @@
+0.2.6 - 20080217 - Clayton O'Neill
+
+ * Changed debug output for array validation to print out the index of the
+   array element that's being validated.  Thanks to Diab Jerius for the
+   suggestion.
+
 0.2.5 - 20080217 - Clayton O'Neill
 
  * Fixed a bug where the default for the debug handler was incorrect. 

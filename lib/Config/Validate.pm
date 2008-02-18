@@ -21,7 +21,7 @@ use 5.008005;
   our @EXPORT_OK = qw(validate mkpath);
   our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
   
-  our $VERSION = '0.2.5';
+  our $VERSION = '0.2.6';
 
   my @schema              :Field 
                           :Accessor(schema) 
@@ -408,10 +408,13 @@ use 5.008005;
                   mkpath($path), ref $value);
     }
 
+    my $index = 0;
     foreach my $item (@$value) {
-      $self->_debug("Validating ", mkpath($path));
+      my @path = ( @$path, "[$index]" );
+      $self->_debug("Validating ", mkpath(@path));
       my $callback = $types[$$self]{$def->{subtype}}{validate};
-      $callback->($self, $item, $def, $path);
+      $callback->($self, $item, $def, \@path);
+      $index++;
     }
     return;
   }
@@ -579,7 +582,7 @@ configuration files. (Or anywhere else)
 
 =head1 VERSION
 
-Version 0.2.5
+Version 0.2.6
 
 =head1 DESCRIPTION
 
