@@ -89,7 +89,7 @@ sub validate :Test(2) {
   return;
 }
 
-sub duplicate_type :Test(4) {
+sub duplicate_type  {
   my ($self) = @_;
 
   $self->{cv}->add_type(name => 'test_type',
@@ -108,6 +108,69 @@ sub duplicate_type :Test(4) {
   };
   like($@, qr/test/, "validate completed without error");
   is($self->{counter}, 1, "callback ran once");
+
+  return;
+}
+
+sub update_type :Test(2) {
+  my ($self) = @_;
+  my ($sub1, $sub2) = (0, 0);
+  
+  $self->{cv}->add_type(name => 'duplicate_type',
+                        validate => sub { $sub1 = 1 },
+                       );
+  
+  $self->{cv}->add_type(name => 'duplicate_type',
+                        validate => sub { $sub2 = 1 },
+                       );
+
+  $self->{cv}->schema({ test => { type => 'duplicate_type' }});
+  $self->{cv}->validate(config => { test => 1 });
+
+  is($sub1, 0, "sub1 didn't run");
+  is($sub2, 1, "sub2 did run");
+  return;
+}
+
+sub supplement_type :Test(12) {
+  my ($self) = @_;
+
+  my $counter = 0;
+  my $validate = sub {
+    my ($cv, $ref, $def, $path) = @_;
+    $counter++;
+    is($counter, 2, "validate called second");
+
+    isa_ok($cv, 'Config::Validate');
+    isa_ok($ref, "SCALAR", "config item passed by reference");
+    is($$ref, 1, "config item has correct value");
+    is_deeply($def, { type => 'supplement_type' },
+              "definition is correct");
+    is_deeply($path, [ 'test' ], "path is correct");
+  };
+  my $item_init = sub {
+    my ($cv, $ref, $def, $path) = @_;
+    $counter++;
+    is($counter, 1, "item_init called first");
+
+    isa_ok($cv, 'Config::Validate');
+    isa_ok($ref, "SCALAR", "config item passed by reference");
+    is($$ref, 1, "config item has correct value");
+    is_deeply($def, { type => 'supplement_type' },
+              "definition is correct");
+    is_deeply($path, [ 'test' ], "path is correct");
+  };
+
+  $self->{cv}->add_default_type(name => 'supplement_type',
+                                validate => $validate,
+                               );
+  
+  $self->{cv}->add_default_type(name => 'supplement_type',
+                                item_init => $item_init,
+                               );
+
+  $self->{cv}->schema({ test => { type => 'supplement_type' }});
+  $self->{cv}->validate(config => { test => 1 });
 
   return;
 }

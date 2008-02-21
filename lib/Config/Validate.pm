@@ -128,18 +128,19 @@ use 5.008005;
       $self->add_type(%p);
     }
 
-    if (defined $types{$p{name}}) {
-      _throw "Attempted to add type '$p{name}' that already exists";
+    my $name = delete $p{name};
+    if (defined $types{$name}) {
+      while (my ($k, $v) = each %p) {
+        $types{$name}{$k} = $v;
+      }
+    } else {
+      my $type = clone(\%p);
+      if (keys %$type == 0) {
+        _throw "No callbacks defined for type '$name'";
+      }
+      $types{$name} = $type;
     }
-
-    my $type = clone(\%p);
-    delete $type->{name};
-    if (keys %$type == 0) {
-      _throw "No callbacks defined for type '$p{name}'";
-    }
-    $types{$p{name}} = $type;
     
-
     return;
   }
 
@@ -147,16 +148,18 @@ use 5.008005;
     my $self = shift;
     my %p = _parse_add_type_params(@_);
     
-    if (defined $types[$$self]{$p{name}}) {
-      _throw "Attempted to add type '$p{name}' that already exists";
+    my $name = delete $p{name};
+    if (defined $types[$$self]{$name}) {
+      while (my ($k, $v) = each %p) {
+        $types[$$self]{$name}{$k} = $v;
+      }
+    } else {
+      my $type = clone(\%p);
+      if (keys %$type == 0) {
+        _throw "No callbacks defined for type '$name'";
+      }
+      $types[$$self]{$name} = $type;
     }
-    
-    my $type = clone(\%p);
-    delete $type->{name};
-    if (keys %$type == 0) {
-      _throw "No callbacks defined for type '$p{name}'";
-    }
-    $types[$$self]{$p{name}} = $type;
     return;
   }
 

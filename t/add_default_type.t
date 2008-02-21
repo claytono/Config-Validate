@@ -10,7 +10,7 @@ package Test::AddDefaultType;
 use base qw(Test::Class);
 use Test::More;
 
-use Config::Validate;
+use Config::Validate qw(validate);
 
 sub teardown :Test(teardown) {
   Config::Validate::reset_default_types();
@@ -185,19 +185,65 @@ sub instance_validate :Test(4) {
   return;
 }
 
-sub duplicate_type :Test(1) {
-  my $counter = 0;
+sub update_type :Test(3) {
+  my ($sub1, $sub2) = (0, 0);
   Config::Validate::add_default_type(name => 'duplicate_type',
-                                     validate => sub { },
+                                     validate => sub { $sub1 = 1 },
                                     );
   
   eval {
     Config::Validate::add_default_type(name => 'duplicate_type',
-                                       validate => sub { },
+                                       validate => sub { $sub2 = 1 },
                                       );
   };
-  like($@, qr/Attempted to add type 'duplicate_type' that already/, 
-       "adding duplicate type failed as expected");
+  is($@, '', "updating type didn't fail");
+
+  validate(schema => { test => { type => 'duplicate_type' }},
+           config => { test => 1 });
+
+  is($sub1, 0, "sub1 didn't run");
+  is($sub2, 1, "sub2 did run");
+  return;
+}
+
+sub supplement_type :Test(12) {
+  my $counter = 0;
+  my $validate = sub {
+    my ($self, $ref, $def, $path) = @_;
+    $counter++;
+    is($counter, 2, "validate called second");
+
+    isa_ok($self, 'Config::Validate');
+    isa_ok($ref, "SCALAR", "config item passed by reference");
+    is($$ref, 1, "config item has correct value");
+    is_deeply($def, { type => 'supplement_type' },
+              "definition is correct");
+    is_deeply($path, [ 'test' ], "path is correct");
+  };
+  my $item_init = sub {
+    my ($self, $ref, $def, $path) = @_;
+    $counter++;
+    is($counter, 1, "item_init called first");
+
+    isa_ok($self, 'Config::Validate');
+    isa_ok($ref, "SCALAR", "config item passed by reference");
+    is($$ref, 1, "config item has correct value");
+    is_deeply($def, { type => 'supplement_type' },
+              "definition is correct");
+    is_deeply($path, [ 'test' ], "path is correct");
+  };
+
+  Config::Validate::add_default_type(name => 'supplement_type',
+                                     validate => $validate,
+                                    );
+  
+  Config::Validate::add_default_type(name => 'supplement_type',
+                                     item_init => $item_init,
+                                    );
+
+  validate(schema => { test => { type => 'supplement_type' }},
+           config => { test => 1 });
 
   return;
 }
+
