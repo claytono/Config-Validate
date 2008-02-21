@@ -89,15 +89,21 @@ use 5.008005;
 
   sub _parse_add_type_params {
     my $spec = { name => { type => SCALAR },
-                 validate => { type => CODEREF,
-                               optional => 1,
-                             },
-                 init     => { type => CODEREF,
-                               optional => 1,
-                             },
-                 finish   => { type => CODEREF,
-                               optional => 1,
-                             },
+                 validate    => { type => CODEREF,
+                                  optional => 1,
+                                },
+                 init        => { type => CODEREF,
+                                  optional => 1,
+                                },
+                 item_init   => { type => CODEREF,
+                                  optional => 1,
+                                },
+                 item_finish => { type => CODEREF,
+                                  optional => 1,
+                                },
+                 finish      => { type => CODEREF,
+                                  optional => 1,
+                                },
                };
     return validate_with(params         => \@_,
                          spec           => $spec,
@@ -257,11 +263,13 @@ use 5.008005;
           delete $orig->{$name};
         }
         
-        $self->_debug("Validating ", mkpath(@curpath));
         if (lc($def->{type}) eq 'nested') {
+          $self->_debug("Validating ", mkpath(@curpath));
           $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
         } else {
-          $self->_invoke_validate_callback($cfg, $canonical_name, $def, \@curpath);
+          $self->_invoke_validate_callback(\$cfg->{$canonical_name}, 
+                                           $def, 
+                                           \@curpath);
         }
         
         if (defined $def->{callback}) {
@@ -296,17 +304,27 @@ use 5.008005;
   }
 
   sub _invoke_validate_callback {
-    my ($self, $cfg, $canonical_name, $def, $curpath) = @_;
+    my ($self, $item, $def, $curpath) = @_;
 
+    $self->_debug("Validating ", mkpath($curpath));
     my $typeinfo = $types[$$self]{$def->{type}};
-    my $callback = $typeinfo->{validate};
+    my %item_callbacks = (item_init   => 0,
+                          validate    => 1,
+                          item_finish => 0,
+                         );
 
-    if (not defined $callback) {
-      _throw("No callback defined for type '$def->{type}'");
+    foreach my $callback_name (qw(item_init validate item_finish)) {
+      my $callback = $typeinfo->{$callback_name};
+      my $required = $item_callbacks{$callback_name};
+
+      if (not defined $callback) {
+        next unless $required;
+        _throw("No $callback_name callback defined for type '$def->{type}'");
+      }
+
+      $callback->($self, $item, $def, $curpath);
     }
-    
-    $callback->($self, \$cfg->{$canonical_name}, $def, $curpath);
-      
+
     return;
   }
   
@@ -973,19 +991,33 @@ normalizing values, like the C<boolean> validation type does.
 You can use the C<mkpath> method to convert the path to a more
 readable form for error messages and such.
 
+=item * item_init
+
+The value of C<item_init> should be a callback that will be run before
+each item in the configuration is validated.  It takes the same
+arguments as the C<validate> callback, and is also allowed to modify
+the configuration item.
+
+=item * item_finish
+
+The value of C<item_finish> should be a callback that will be run
+after each item in the configuration is validated.  It takes the same
+arguments as the C<validate> callback, and is also allowed to modify
+the configuration item.
+
 =item * init
 
 The value of C<init> should be a callback that will be run before any
 validation is done.  The callback will be passed the
-C<Config::Validate> object, the schema, and the configuration being
-validated.
+C<Config::Validate> object, the schema, and the entire configuration
+being validated.
 
 =item * finish
 
 The value of C<finish> should be a callback that will be run after any
 validation is done.  The callback will be passed the
-C<Config::Validate> object, the schema, and the configuration being
-validated.
+C<Config::Validate> object, the schema, and the entire configuration
+being validated.
 
 =back
 

@@ -38,7 +38,7 @@ sub validate_fail_on_type_with_init_hook :Test(2) {
 
   my $cv = Config::Validate->new(schema => {test => {type => 'init_hook'}});
   eval { $cv->validate({test => 1}); };
-  like($@, qr/No callback defined for type 'init_hook'/, 
+  like($@, qr/No validate callback defined for type 'init_hook'/, 
        "validate failed as expected");
   ok($init_ran, "init ran");
 
@@ -99,21 +99,40 @@ sub finish_hook :Test(5) {
   return;
 }
 
-sub class_method_validate :Test(2) {
+sub class_method_per_item :Test(5) {
+
   my $counter = 0;
-  Config::Validate->add_default_type(name => 'class_method_validate',
-                                     validate => sub { $counter++ },
+
+  my $init = sub { 
+    $counter++;
+    is($counter, 1, "init_cb fired in order");
+  };
+  
+  my $validate = sub { 
+    $counter++;
+    is($counter, 2, "validate_cb fired in order");
+  };
+  
+  my $finish = sub { 
+    $counter++;
+    is($counter, 3, "finish_cb fired in order");
+  };
+  
+  Config::Validate->add_default_type(name => 'class_method',
+                                     item_init   => $init,
+                                     validate    => $validate,
+                                     item_finish => $finish,
                                     ); 
 
   my $cv = Config::Validate->new(schema => 
                                  { test => {
-                                   type => 'class_method_validate'}
+                                   type => 'class_method'}
                                  }
                                 );
 
   eval { $cv->validate({test => 1}); };
   is($@, '', "validate completed without error");
-  is($counter, 1, "callback ran");
+  is($counter, 3, "callback ran");
 
   return;
 }
