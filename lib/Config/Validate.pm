@@ -268,7 +268,9 @@ use 5.008005;
         
         if (lc($def->{type}) eq 'nested') {
           $self->_debug("Validating ", mkpath(@curpath));
-          $self->_validate($cfg->{$canonical_name}, $schema->{$name}{child}, \@curpath);
+          $self->_validate($cfg->{$canonical_name}, 
+                           $schema->{$canonical_name}{child}, 
+                           \@curpath);
         } else {
           $self->_invoke_validate_callback(\$cfg->{$canonical_name}, 
                                            $def, 

@@ -49,5 +49,20 @@ sub invalid_alias :Test(1) {
   return;
 }
 
+sub nested_alias :Test(1) {
 
+  my $cv = Config::Validate->new(schema => {
+    section => { 
+      type => 'nested',
+      alias => 'testsection',
+      child => {
+        foo => {
+          type => 'string',
+        }}}});
+  
+  eval { $cv->validate({ testsection => { foo => 'bar' } }) };
+  is($@, '', "nested section with alias validated correctly");
+
+  return;
+}
 
