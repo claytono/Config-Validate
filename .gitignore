@@ -6,3 +6,4 @@ blib
 inc
 Makefile
 pm_to_blib
+cover_db
