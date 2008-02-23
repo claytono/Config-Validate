@@ -842,11 +842,8 @@ keys
 
 =item * child
 
-If the C<hash> type finds a C<child> option, then it will validate any
-keys in the hash against the fields in the C<child> definition.  Note
-that it is B<NOT> an error if elements are found in the hash that are not
-in child.  If you want that behavior, you should use the C<nested>
-type instead.
+If the C<child> option is specified, then each value must be a hash
+reference, and will be verified against the definition the child provides.
 
 =back
 
